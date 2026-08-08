@@ -1,0 +1,25 @@
+# Credentials / secrets
+.env
+.env.*
+secrets/
+private/
+credentials/
+*.key
+*.pem
+*.p12
+*.pfx
+*.lic
+
+# FortiGate / appliance backups: keep sanitized exports under explicit safe filenames only
+*.bak
+*.backup
+
+# Local editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
