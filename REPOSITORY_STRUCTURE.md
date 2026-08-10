@@ -2,25 +2,23 @@
 
 ## Root-versus-lesson mapping
 
-The repository root is **not Lesson 00**. It represents the entire FortiGate project and evolves as new lessons are completed.
+The repository root is **not a lesson**. It represents the entire FortiGate project and evolves as new lessons are completed.
 
 ```text
-fortigate-76-security-lab/          <- whole project
-├── README.md                       <- overall project state
+fortigate-76-security-lab/                 <- whole project
+├── README.md                              <- overall project state
 ├── CHANGELOG.md
 ├── REPOSITORY_STRUCTURE.md
 └── lessons/
-    ├── 00-environment-setup/       <- Lesson 00 only
-    ├── 01-<first-course-lab>/      <- future Lesson 01
-    ├── 02-<second-course-lab>/     <- future Lesson 02
+    ├── 00-environment-setup/              <- Lesson 00
+    ├── 01-system-network-admin-access/    <- Lesson 01
+    ├── 02-<next-course-lab>/              <- future
     └── _template/
 ```
 
 This mirrors the organization used by the FortiWeb project: the root summarizes the integrated project, while each lesson contains its own detailed implementation and evidence.
 
-This repository follows the incremental documentation model used for the FortiGate 7.6 EVE-NG lab.
-
-## Initial structure
+## Current realized structure
 
 ```text
 .
@@ -31,10 +29,15 @@ This repository follows the incremental documentation model used for the FortiGa
 └── lessons/
     ├── _template/
     │   └── README.md
-    └── 00-environment-setup/
+    ├── 00-environment-setup/
+    │   ├── README.md
+    │   └── evidence/
+    │       └── README.md
+    └── 01-system-network-admin-access/
         ├── README.md
         └── evidence/
-            └── README.md
+            ├── README.md
+            └── curated proof artifacts
 ```
 
 ## Ownership rules
@@ -44,26 +47,27 @@ This repository follows the incremental documentation model used for the FortiGa
 The root README describes:
 
 - the purpose of the full project
-- the currently validated FortiGate base environment
+- the currently validated integrated architecture
 - the list/status of completed lessons
+- the project methodology
 - the evidence standard
 - the evaluation-license constraints
 
-It should stay concise compared with the individual lesson documents.
+It stays concise compared with individual lesson documents.
 
 ### `lessons/NN-<name>/README.md`
 
-Each lesson owns the detailed narrative for one implemented capability:
+Each lesson owns the detailed narrative for one implemented stage:
 
 1. scope
 2. starting state
 3. architecture delta
 4. exact configuration
-5. verification plan
-6. FortiGate diagnostics/logs
-7. troubleshooting
+5. verification plan and observed results
+6. FortiGate diagnostics/control-plane state
+7. troubleshooting and operational decisions
 8. final validated result
-9. rollback
+9. cleanup/rollback
 10. lessons learned
 11. evidence
 
@@ -77,6 +81,14 @@ Do not use this directory as a dump of every screenshot taken while studying.
 
 Template for future lessons. Copy it only when a new lesson is actually started.
 
+## Project methodology
+
+The Fortinet course is used as the curriculum, not as a sequence of GUI screenshots to reproduce.
+
+A topic is implemented only when it adds meaningful lab behavior. Theory can remain theory.
+
+The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
+
 ## Evidence rule
 
 A screenshot of a configured GUI object is not sufficient evidence by itself.
@@ -84,8 +96,10 @@ A screenshot of a configured GUI object is not sufficient evidence by itself.
 Where applicable, use three layers of proof:
 
 1. **Configuration proof** - the intended FortiGate object exists.
-2. **Data-plane proof** - traffic behaves as expected.
-3. **Control-plane proof** - FortiGate logs, sessions, routing, VPN state, authentication state, or diagnostics identify why.
+2. **Data-plane/client proof** - traffic or endpoint behavior matches the intended state.
+3. **Control-plane/security proof** - FortiGate routing, sessions, authentication, VPN state, logs, or diagnostics identify why.
+
+Negative/failure/security testing should be included when it materially strengthens the claim.
 
 ## Evaluation-license design rule
 
