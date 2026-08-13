@@ -12,7 +12,8 @@ fortigate-76-security-lab/                 <- whole project
 └── lessons/
     ├── 00-environment-setup/              <- Lesson 00
     ├── 01-system-network-admin-access/    <- Lesson 01
-    ├── 02-<next-course-lab>/              <- future
+    ├── 02-firewall-policies-nat/          <- Lesson 02
+    ├── 03-<next-course-lab>/              <- future
     └── _template/
 ```
 
@@ -33,11 +34,16 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │   ├── README.md
     │   └── evidence/
     │       └── README.md
-    └── 01-system-network-admin-access/
+    ├── 01-system-network-admin-access/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       └── curated proof artifacts
+    └── 02-firewall-policies-nat/
         ├── README.md
         └── evidence/
             ├── README.md
-            └── curated proof artifacts
+            └── curated policy/NAT/VIP proof artifacts
 ```
 
 ## Ownership rules
@@ -71,6 +77,8 @@ Each lesson owns the detailed narrative for one implemented stage:
 10. lessons learned
 11. evidence
 
+Lesson 02 expands this model with packet-capture evidence because NAT claims are strongest when the receiving endpoint proves the translated address it actually observed.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -89,6 +97,14 @@ A topic is implemented only when it adds meaningful lab behavior. Theory can rem
 
 The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
 
+Lesson 02 reinforces several methodology rules:
+
+- management infrastructure is not repurposed merely because it already has connectivity
+- negative tests should change one match condition at a time
+- logs and packet captures are preferred over GUI-only claims
+- equivalent objects can share one policy when the security intent is genuinely identical
+- a course example does not require a duplicate lab if the same mechanism has already been proven more meaningfully
+
 ## Evidence rule
 
 A screenshot of a configured GUI object is not sufficient evidence by itself.
@@ -97,9 +113,11 @@ Where applicable, use three layers of proof:
 
 1. **Configuration proof** - the intended FortiGate object exists.
 2. **Data-plane/client proof** - traffic or endpoint behavior matches the intended state.
-3. **Control-plane/security proof** - FortiGate routing, sessions, authentication, VPN state, logs, or diagnostics identify why.
+3. **Control-plane/security proof** - FortiGate routing, sessions, authentication, logs, or diagnostics identify why.
 
 Negative/failure/security testing should be included when it materially strengthens the claim.
+
+For NAT, packet capture at the receiving host is preferred because it proves which translated address reached the destination.
 
 ## Evaluation-license design rule
 
@@ -111,8 +129,9 @@ Future lessons may therefore:
 - reset a completed scenario before building another
 - use separate EVE lab files
 - temporarily replace a policy or route for a specific experiment
+- combine address objects in one policy when the traffic has genuinely identical security intent
 
-The repository must state when a configuration was reset instead of implying that every level coexisted simultaneously.
+The repository must state when a configuration was reset or reused instead of implying that every temporary state coexisted simultaneously.
 
 ## Sanitization rule
 
@@ -124,3 +143,4 @@ Never commit:
 - private keys
 - unredacted secrets/tokens
 - unsanitized appliance backup files
+- screenshots containing reusable passwords
