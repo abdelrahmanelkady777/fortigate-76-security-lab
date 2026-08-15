@@ -2,6 +2,52 @@
 
 All notable lab milestones are documented here.
 
+## 2026-08-15
+
+### Lesson 03 - Routing, Static Routes, and ECMP
+
+- Converted the directly attached Lesson 02 outside segment into a routed topology while preserving Alpine's established `10.20.20.100/24` address.
+- Added `10.30.30.0/24` as the FortiGate-R1 transit network instead of reusing Alpine's endpoint subnet as a transit link.
+- Corrected an Alpine address that had been created as `/32`, documented that Linux `ip addr` expects CIDR prefix notation, and brought eth1 administratively up.
+- Configured R1 Gi0/0 as `10.20.20.1/24` and Gi0/1 as `10.30.30.2/24`.
+- Added R1's return route to `10.10.10.0/24` through FortiGate at `10.30.30.1`.
+- Added Alpine routes to LAB-LAN and the R1-FortiGate transit through `10.20.20.1`.
+- Readdressed FortiGate port3 as `TRANSIT-R1` at `10.30.30.1/24`.
+- Validated the lower path in layers: same-subnet adjacency, R1 forwarding, FortiGate static route, FortiGate-originated ping, then client transit.
+- Configured the intermediate FortiGate route to `10.20.20.0/24` through `10.30.30.2` with distance `10`.
+- Proved that a working route does not authorize transit: FortiGate could ping Alpine while Kali failed without a matching policy.
+- Restored the `Lab-to-Alpine` port2-to-port3 PING policy with NAT disabled and then verified Kali-to-Alpine reachability at TTL `62`.
+- Correlated the FortiGate CLI routing table with the GUI Routing Monitor and documented `[distance/metric]` output.
+- Recorded route lookup, longest-prefix match, RIB/FIB, administrative distance, metric, FortiGate priority, and reverse-path context against the live topology.
+- Documented static routes with named addresses, Internet Service routing, and the GUI Route Lookup tool as studied concepts, while clearly stating why no separate lab implementation was claimed.
+- Preserved the Lesson 02 VIP evidence only as historical state; the publication design was not claimed as revalidated after the port3 topology change.
+- Added R2 as the second routed path and repurposed FortiGate port1 from its former management/upstream role because the evaluation permits only three interfaces.
+- Configured FortiGate port1 as `R2-Port1` at `10.50.50.1/24`.
+- Configured R2 Gi0/0 as `10.50.50.2/24`, Gi0/1 as `10.40.40.1/24`, and added its return route to `10.10.10.0/24` through `10.50.50.1`.
+- Added Alpine eth2 at `10.40.40.100/24` and verified both Alpine routed identities.
+- Installed full iproute2 on Alpine with `apk add iproute2` to support multipath `nexthop` syntax.
+- Configured Alpine's equal-weight route to `10.10.10.0/24` through both R1/eth1 and R2/eth2, plus explicit routes to the two remote FortiGate transit networks.
+- Used `ip route get` with bound source addresses to confirm Alpine's lower- and upper-path selection.
+- Documented that Alpine ECMP and FortiGate ECMP are independent routing decisions.
+- Exposed and corrected an operational error where a GUI policy draft had not been saved with **OK**.
+- Reused the available three-policy budget transparently; the combined bidirectional interface policy is documented as a lab-only compromise rather than production least privilege.
+- Corrected the ECMP test design after recognizing that `10.20.20.100` and `10.40.40.100` are different destinations and therefore cannot form FortiGate ECMP.
+- Added Alpine loopback `10.60.60.100/32` as one shared destination reachable through either routed member.
+- Added R1's `/32` route through Alpine `10.20.20.100` and R2's `/32` route through Alpine `10.40.40.100`.
+- Replaced the two intermediate FortiGate remote-network routes with two equal static routes to `10.60.60.100/32`: via R1 `10.30.30.2` on port3 and via R2 `10.50.50.2` on port1.
+- Confirmed both FortiGate routes were installed with distance `10`, metric `0`, and equal priority, allowing FortiGate ECMP to form automatically.
+- Verified the FortiGate itself could reach the shared loopback at TTL `63`.
+- Diagnosed a Kali failure with `diagnose sniffer packet`: requests appeared only as `port2 in`, identifying a firewall-policy interface mismatch before any ECMP egress occurred.
+- Added port3 to the combined policy's incoming and outgoing interface lists so either ECMP member could be authorized.
+- Confirmed `set v4-ecmp-mode source-ip-based` in the FortiGate system settings.
+- Proved source `10.10.10.100` used port3/R1 with `port3 out` packet-capture evidence.
+- Correctly interpreted source `.101` as an asymmetric-return example: the request left port3 while Alpine's own ECMP decision returned through port1.
+- Added temporary Kali alias `10.10.10.110/24` and proved the second FortiGate member with an explicit `port1 out` request capture.
+- Recorded that equal source-IP-based ECMP does not alternate packets and that adjacent source addresses are not guaranteed to hash to different members.
+- Discussed weight-based ECMP without claiming it was implemented; the completed lab retains equal weights and source-IP-based selection.
+- Documented cleanup and persistence requirements for the temporary Kali address, live Alpine `ip` configuration, and Cisco running configurations.
+- Embedded the latest dual-path topology in the root README and added 43 curated evidence artifacts covering configuration, success, failure, diagnosis, and correction.
+
 ## 2026-08-13
 
 ### Lesson 02 - Firewall Policies and NAT
