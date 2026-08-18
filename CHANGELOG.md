@@ -2,6 +2,31 @@
 
 All notable lab milestones are documented here.
 
+## 2026-08-17
+
+### Lesson 04 - Firewall Authentication
+
+- Preserved the Lesson 03 dual-routed topology and used Alpine's `10.60.60.100/32` loopback as the protected destination; Alpine remained outside `LAB-LAN`.
+- Restored volatile Alpine/router state and validated Kali/FortiGate reachability before adding authentication.
+- Hosted a small protected page on `10.60.60.100:80` with Python because this Alpine BusyBox build did not include the `httpd` applet.
+- Diagnosed why the first HTTP test bypassed authentication: the inherited policy matched all interfaces, sources, destinations, and services.
+- Reused Policy ID `3` under the three-policy evaluation limit instead of creating an unavailable fourth rule.
+- Created local user `lab-local-user` and firewall group `LAB-AUTH-USERS`; the password is excluded from the repository.
+- Reused `KALI-CLIENT` and created `ALPINE-LOOPBACK` to retain explicit `/32` endpoint conditions.
+- Narrowed Policy ID `3` to `auth-lan-to-alpine`: port2 ingress, port1/port3 ECMP egress, Kali source, authenticated group, Alpine loopback destination, HTTP/PING services, and NAT disabled.
+- Proved the unauthenticated state: PING failed and HTTP was intercepted by the FortiGate authentication portal.
+- Authenticated through the HTTP form portal and verified redirection to the Alpine protected resource.
+- Confirmed `diagnose firewall auth list` mapped `lab-local-user` and `LAB-AUTH-USERS` to `10.10.10.100` with timers and traffic counters.
+- Proved PING succeeded after HTTP created the authentication mapping, while documenting that ICMP itself cannot present an active login prompt.
+- Verified five-minute `idle-timeout` behavior by observing the authentication portal return after inactivity.
+- Correlated the GUI Firewall User Monitor with the CLI mapping and documented GUI deauthentication capability.
+- Recorded the active authentication types, on-demand mode, timeout values, portal behavior, and certificate selection.
+- Tested optional HTTP-to-HTTPS portal redirection to port `1003`; both available VM certificates produced `SSL_ERROR_NO_CYPHER_OVERLAP`.
+- Refused to weaken browser cryptography, restored `Fortinet_Factory`, disabled `auth-secure-http`, and retained HTTPS portal hardening as theory only.
+- Documented LDAP directory structure, LDAP versus RADIUS, RADIUS AAA/message flow, 2FA/FortiToken, passive authentication/FSSO, protocol behavior, and mixed-policy ordering as theory only.
+- Marked LDAP and RADIUS explicitly as unimplemented; no identity server is claimed on Kali, Alpine, or Metasploitable.
+- Added 15 curated evidence artifacts covering configuration, negative behavior, login, successful access, timeout, monitoring, settings, and the HTTPS rollback decision.
+
 ## 2026-08-15
 
 ### Lesson 03 - Routing, Static Routes, and ECMP

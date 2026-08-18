@@ -6,9 +6,9 @@ Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator c
 
 ## Current state
 
-**Current milestone: Lesson 03 - Routing, Static Routes, and ECMP (Complete)**
+**Current milestone: Lesson 04 - Firewall Authentication (Complete)**
 
-The lab now implements a dual-routed underlay between `LAB-LAN` and Alpine Linux. FortiGate reaches one shared Alpine loopback through two equivalent static routes: port3/R1 and the repurposed port1/R2. Alpine also has its own equal-cost return route toward `LAB-LAN`. FortiGate source-IP-based ECMP was proven on both members with packet captures, including an explicit `port1 out` capture for the upper path.
+The Lesson 03 dual-routed/ECMP topology now carries an identity-aware application flow. Kali must authenticate as a member of `LAB-AUTH-USERS` before Policy ID `3` permits HTTP or PING to the Alpine loopback. Pre-authentication denial, browser login, post-authentication access, the five-minute idle timeout, and CLI/GUI user monitoring were validated. LDAP, RADIUS, 2FA/FortiToken, passive authentication, and production HTTPS portal design remain theory only.
 
 | Component | Current validated state |
 | --- | --- |
@@ -33,6 +33,13 @@ The lab now implements a dual-routed underlay between `LAB-LAN` and Alpine Linux
 | FortiGate ECMP algorithm | `source-ip-based` |
 | Alpine ECMP | Equal-weight route to `10.10.10.0/24` through `10.20.20.1/eth1` and `10.40.40.1/eth2` |
 | ECMP proof | `.100` selected port3/R1; temporary `.110` selected port1/R2 |
+| Protected Lesson 04 resource | Python HTTP service on Alpine loopback `10.60.60.100:80` |
+| Local firewall identity | `lab-local-user` in `LAB-AUTH-USERS` |
+| Identity-aware policy | Policy ID `3`, `auth-lan-to-alpine`; port2 to port1/port3; `KALI-CLIENT` + `LAB-AUTH-USERS` to `ALPINE-LOOPBACK`; `HTTP` and `PING`; NAT disabled |
+| Authentication behavior | HTTP form login creates an IP-to-user mapping; PING can reuse the mapping but cannot prompt |
+| Authentication lifetime | `5` minutes, `idle-timeout` |
+| Monitoring | `diagnose firewall auth list` and GUI Firewall User Monitor correlated |
+| HTTPS portal | Theory only in final state; temporary port 1003 test failed TLS cipher negotiation and was rolled back |
 | Current management decision | port1 is no longer management; administration continues through port2/LAB-LAN |
 | FortiCare / FortiGuard subscriptions | Not included with the free evaluation |
 
@@ -48,7 +55,7 @@ S 10.60.60.100/32 [10/0] via 10.30.30.2, port3
 
 The earlier `10.20.20.0/24` and `10.40.40.0/24` FortiGate routes were validated intermediate states. They were repurposed to the common `/32` routes because equal-cost routes to different destination prefixes are not ECMP.
 
-## Latest validated topology
+## Latest validated physical topology
 
 ![Latest Lesson 03 dual-path routing topology](lessons/03-routing-static-routes-ecmp/evidence/19-final-dual-path-topology.png)
 
@@ -68,7 +75,8 @@ The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.4
 | [01 - System, Network, and Administrative Access Foundations](lessons/01-system-network-admin-access/README.md) | Complete | Internal LAB-LAN, DHCP, persistent Kali client, management protocols, and Trusted Hosts positive/negative validation |
 | [02 - Firewall Policies and NAT](lessons/02-firewall-policies-nat/README.md) | Complete | Stateful policy behavior, matching/order/logging, SNAT/IP pools, VIP DNAT, and port forwarding |
 | [03 - Routing, Static Routes, and ECMP](lessons/03-routing-static-routes-ecmp/README.md) | Complete | Route lookup and attributes, Cisco/Alpine return routing, route-versus-policy behavior, dual routed paths, Alpine ECMP, shared loopback, and FortiGate source-IP ECMP proof |
-| 04+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
+| [04 - Firewall Authentication](lessons/04-firewall-authentication/README.md) | Complete | Local active authentication, identity-aware policy enforcement, HTTP-triggered login, mapping reuse by PING, timeout, and user monitoring; remote authentication and 2FA retained as theory |
+| 05+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
 
 The repository root describes the currently integrated project. Each lesson preserves the detailed implementation and its validated historical stages.
 
@@ -93,12 +101,17 @@ The repository root describes the currently integrated project. Each lesson pres
     ├── 02-firewall-policies-nat/
     │   ├── README.md
     │   └── evidence/
-    └── 03-routing-static-routes-ecmp/
+    ├── 03-routing-static-routes-ecmp/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       ├── 19-final-dual-path-topology.png
+    │       └── curated routing, policy, and ECMP proof artifacts
+    └── 04-firewall-authentication/
         ├── README.md
         └── evidence/
             ├── README.md
-            ├── 19-final-dual-path-topology.png
-            └── curated routing, policy, and ECMP proof artifacts
+            └── curated authentication, timeout, and monitoring proof
 ```
 
 ## Project methodology
@@ -126,6 +139,15 @@ Lesson 03 adds several important methodology rules:
 - Packet direction matters: `port1 in` is not evidence of `port1 out`.
 - Different devices can make independent ECMP decisions, producing an asymmetric return path.
 - A saved configuration is the test state; an unsaved GUI editor is not.
+
+Lesson 04 adds identity-specific rules:
+
+- Authentication identifies a user; the firewall policy still performs authorization.
+- Source address and user/group are simultaneous match conditions, not alternatives.
+- Establish the protected service before adding authentication so application failure is not confused with policy failure.
+- A broad unauthenticated policy can bypass a narrower authentication design.
+- PING cannot present a login form but can reuse an active mapping created through HTTP.
+- Theory-only LDAP, RADIUS, 2FA, passive authentication, and HTTPS hardening are not represented as deployed capabilities.
 
 ## Evidence standard
 
@@ -157,6 +179,14 @@ source 10.10.10.100 -> port3 out
 source 10.10.10.110 -> port1 out
 ```
 
+```text
+Firewall-authentication proof
+before login -> PING denied and HTTP intercepted
+after login -> Alpine HTTP and PING allowed
+after five idle minutes -> login required again
+GUI monitor == diagnose firewall auth list
+```
+
 ## Evaluation-license constraint
 
 The permanent evaluation license used in this lab is intentionally restricted. The FortiGate reported:
@@ -169,7 +199,7 @@ The permanent evaluation license used in this lab is intentionally restricted. T
 - No FortiCare support
 - No FortiGuard support
 
-These limits directly shaped Lesson 03. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. A broad bidirectional lab policy was used to cover the possible ECMP interface combinations within the three-policy ceiling. That policy is documented as a lab compromise, not as a production least-privilege design.
+These limits directly shaped Lessons 03 and 04. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 then repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy.
 
 ## Historical Lesson 02 publication objects
 
@@ -178,15 +208,16 @@ The Lesson 02 VIP demonstrations remain valid evidence for that lesson:
 - Static VIP `10.20.20.220 -> 10.10.10.101`
 - Port-forward VIP `10.20.20.221:8080 -> 10.10.10.101:80`
 
-They were not revalidated after port3 changed from the directly connected `10.20.20.0/24` outside network to the `10.30.30.0/24` R1 transit network. They must therefore be treated as historical Lesson 02 state, not current Lesson 03 publication claims.
+They were not revalidated after port3 changed from the directly connected `10.20.20.0/24` outside network to the `10.30.30.0/24` R1 transit network. They must therefore be treated as historical Lesson 02 state, not current integrated-state publication claims.
 
 ## Persistence and cleanup notes
 
 - The temporary Kali alias `10.10.10.110/24` was only an ECMP hash probe and should be removed after testing.
 - Because `.110` is inside the LAB-LAN DHCP scope, it must be confirmed unused/reserved before any repeat test.
 - Alpine `ip addr` and `ip route` commands configure the live system and require separate persistent-network configuration or a preserved node state to survive reboot.
+- The Lesson 04 Python HTTP process on Alpine must also be restarted after node reboot unless made persistent.
 - Cisco running configurations require `copy running-config startup-config` if restart persistence is desired.
-- A production continuation should replace the broad lab policy with directional, explicit, least-privilege policies when license capacity permits.
+- A production continuation should retain directional, explicit, least-privilege policies and a trusted HTTPS authentication portal.
 
 ## Security and sanitization
 
