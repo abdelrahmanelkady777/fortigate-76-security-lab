@@ -14,7 +14,8 @@ fortigate-76-security-lab/                 <- whole project
     ├── 01-system-network-admin-access/    <- Lesson 01
     ├── 02-firewall-policies-nat/          <- Lesson 02
     ├── 03-routing-static-routes-ecmp/      <- Lesson 03
-    ├── 04-<next-course-lab>/              <- future
+    ├── 04-firewall-authentication/        <- Lesson 04
+    ├── 05-<next-course-lab>/              <- future
     └── _template/
 ```
 
@@ -45,12 +46,17 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │   └── evidence/
     │       ├── README.md
     │       └── curated policy/NAT/VIP proof artifacts
-    └── 03-routing-static-routes-ecmp/
+    ├── 03-routing-static-routes-ecmp/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       ├── 19-final-dual-path-topology.png
+    │       └── curated routing/policy/ECMP proof artifacts
+    └── 04-firewall-authentication/
         ├── README.md
         └── evidence/
             ├── README.md
-            ├── 19-final-dual-path-topology.png
-            └── curated routing/policy/ECMP proof artifacts
+            └── 15 curated authentication proof artifacts
 ```
 
 ## Ownership rules
@@ -97,6 +103,17 @@ Lesson 03 expands it again by preserving sequential architecture states. The les
 
 The detailed lesson must make clear which routes and policies were intermediate and which remained in the final state.
 
+Lesson 04 returns to a deliberately compact narrative. It distinguishes:
+
+- local active authentication that was implemented and validated
+- LDAP, RADIUS, passive authentication, 2FA/FortiToken, and production HTTPS portal design that remain theory only
+- the inherited broad policy that initially bypassed authentication
+- the final identity-aware Policy ID `3`
+- pre-authentication denial, post-authentication access, idle timeout, and user monitoring
+- the temporary HTTPS attempt that failed TLS cipher negotiation and was fully rolled back
+
+The lesson should explain the identity and policy reasoning without duplicating the full Lesson 03 routing build.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -115,7 +132,7 @@ A topic is implemented only when it adds meaningful lab behavior. Theory can rem
 
 The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
 
-Lessons 02 and 03 reinforce several methodology rules:
+Lessons 02-04 reinforce several methodology rules:
 
 - established management infrastructure is preserved until a later design intentionally repurposes it and records the new access path
 - negative tests should change one match condition at a time
@@ -128,6 +145,10 @@ Lessons 02 and 03 reinforce several methodology rules:
 - ECMP requires equal eligible routes to the same destination prefix
 - packet direction is interpreted literally: an ingress line is not outbound-member proof
 - sequential reuse under an evaluation limit is documented rather than hidden
+- authentication and authorization are kept distinct
+- the protected application is validated before enforcing an identity condition
+- source address and user/group are documented as simultaneous policy matches
+- theory-only identity systems are labeled explicitly instead of being simulated without meaningful validation
 
 ## Evidence rule
 
@@ -144,6 +165,8 @@ Negative/failure/security testing should be included when it materially strength
 For NAT, packet capture at the receiving host is preferred because it proves which translated address reached the destination.
 
 For ECMP, a FortiGate sniffer trace must identify the request's actual egress interface. Lesson 03 therefore distinguishes `port1 in` return traffic from the `port1 out` request that proves FortiGate selected the R2 member.
+
+For firewall authentication, evidence should show the negative pre-authentication state, successful portal login, protected-resource access, the CLI/GUI user mapping, and timeout behavior. A login-page screenshot alone is not sufficient.
 
 ## Evaluation-license design rule
 
@@ -166,6 +189,8 @@ Lesson 03 applies this rule directly:
 - intermediate routes to `10.20.20.0/24` and `10.40.40.0/24` were replaced by two routes to `10.60.60.100/32`
 - one broad combined policy covered possible ECMP directions within the three-policy ceiling
 - that broad policy is explicitly a constrained lab design, not a production recommendation
+
+Lesson 04 reuses Policy ID `3` as `auth-lan-to-alpine`. Both ECMP egress interfaces remain in the rule, but source, authenticated group, destination, and service are narrowed to the lesson's security intent.
 
 ## Sanitization rule
 
