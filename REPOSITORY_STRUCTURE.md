@@ -15,7 +15,8 @@ fortigate-76-security-lab/                 <- whole project
     ├── 02-firewall-policies-nat/          <- Lesson 02
     ├── 03-routing-static-routes-ecmp/      <- Lesson 03
     ├── 04-firewall-authentication/        <- Lesson 04
-    ├── 05-<next-course-lab>/              <- future
+    ├── 05-antivirus-inspection/            <- Lesson 05
+    ├── 06-<next-course-lab>/               <- future
     └── _template/
 ```
 
@@ -52,11 +53,19 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │       ├── README.md
     │       ├── 19-final-dual-path-topology.png
     │       └── curated routing/policy/ECMP proof artifacts
-    └── 04-firewall-authentication/
+    ├── 04-firewall-authentication/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 15 curated authentication proof artifacts
+    └── 05-antivirus-inspection/
         ├── README.md
+        ├── lab-files/
+        │   ├── README.md
+        │   └── benign.txt
         └── evidence/
             ├── README.md
-            └── 15 curated authentication proof artifacts
+            └── 20 curated AV/inspection proof artifacts
 ```
 
 ## Ownership rules
@@ -114,6 +123,18 @@ Lesson 04 returns to a deliberately compact narrative. It distinguishes:
 
 The lesson should explain the identity and policy reasoning without duplicating the full Lesson 03 routing build.
 
+Lesson 05 continues the compact form. It distinguishes:
+
+- policy inspection architecture (`flow-based` or `proxy-based`) from AV file handling (`stream` or proxy-only `legacy`)
+- firewall-policy acceptance from a later antivirus/UTM denial
+- harmless negative controls from the known-detectable EICAR positive control
+- default file handling from the deliberately restrictive `L05-PROTO-1MB` experiment
+- an oversized-file event from a malware verdict
+- benign ZIP handling from detection inside an EICAR ZIP
+- implemented local AV behavior from unavailable/current cloud-assisted FortiGuard and FortiSandbox services
+
+The lesson reuses the authenticated Policy ID `3` and existing Alpine HTTP service instead of rebuilding routing or identity controls.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -149,6 +170,10 @@ Lessons 02-04 reinforce several methodology rules:
 - the protected application is validated before enforcing an identity condition
 - source address and user/group are documented as simultaneous policy matches
 - theory-only identity systems are labeled explicitly instead of being simulated without meaningful validation
+- AV is tested with both a negative control and a deterministic positive control
+- flow/proxy behavior is compared without incorrectly equating proxy inspection with legacy full-file AV
+- Protocol Options limits are documented as inspection/resource boundaries
+- signature age and subscription limitations remain visible in the conclusion
 
 ## Evidence rule
 
@@ -167,6 +192,8 @@ For NAT, packet capture at the receiving host is preferred because it proves whi
 For ECMP, a FortiGate sniffer trace must identify the request's actual egress interface. Lesson 03 therefore distinguishes `port1 in` return traffic from the `port1 out` request that proves FortiGate selected the R2 member.
 
 For firewall authentication, evidence should show the negative pre-authentication state, successful portal login, protected-resource access, the CLI/GUI user mapping, and timeout behavior. A login-page screenshot alone is not sufficient.
+
+For antivirus, evidence should show the profile/policy state, the benign and EICAR client outcomes, and a FortiGate security event that explains the verdict. Forward Traffic evidence should retain the authenticated identity and selected ECMP path. Large-file and archive claims require paired baselines so a size or file-extension assumption cannot replace content-aware proof.
 
 ## Evaluation-license design rule
 
@@ -191,6 +218,8 @@ Lesson 03 applies this rule directly:
 - that broad policy is explicitly a constrained lab design, not a production recommendation
 
 Lesson 04 reuses Policy ID `3` as `auth-lan-to-alpine`. Both ECMP egress interfaces remain in the rule, but source, authenticated group, destination, and service are narrowed to the lesson's security intent.
+
+Lesson 05 continues to reuse Policy ID `3` and changes only its inspection/security-profile state between tests. `L05-PROTO-1MB` is an intentionally restrictive experiment and should not remain attached for ordinary continuation unless one-MiB blocking is explicitly required.
 
 ## Sanitization rule
 
