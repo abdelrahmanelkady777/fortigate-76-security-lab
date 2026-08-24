@@ -2,6 +2,32 @@
 
 All notable lab milestones are documented here.
 
+## 2026-08-24
+
+### Lesson 05 - Antivirus and Inspection Modes
+
+- Preserved the Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware Policy ID `3`; no new interface, route, or firewall policy was consumed.
+- Restored Alpine's volatile eth1/eth2/loopback addresses, ECMP return route, remote-transit routes, and Python HTTP service before introducing AV.
+- Verified AV Engine `7.00054` and signed base/extended definitions `1.00000`; documented their 2018 age and the absence of current subscribed FortiGuard coverage.
+- Created a 33-byte harmless text file as the negative control and the canonical 68-byte EICAR string as the deterministic positive control.
+- Recorded exact byte counts and SHA-256 hashes so shell quoting or file corruption could not invalidate the test.
+- Established the pre-AV baseline: both benign and EICAR files downloaded completely after active authentication.
+- Diagnosed earlier 131-byte HTML downloads as expired-authentication responses rather than the requested artifacts.
+- Created `L05-AV-FLOW` with Block action and HTTP inspection, attached it to the flow-based authenticated policy, and proved benign content passed while EICAR was reset/denied.
+- Correlated the EICAR result with an Antivirus event showing infected/malicious content and with Forward Traffic details showing `lab-local-user`, `LAB-AUTH-USERS`, port2 ingress, port3/R1 egress, HTTP, and NAT `noop`.
+- Validated the FortiGate replacement page identifying `EICAR_TEST_FILE` and the blocked URL.
+- Created `L05-AV-PROXY`, temporarily switched Policy ID `3` to proxy inspection, and proved the same benign/blocked verdict with an immediate FortiGate `403 Forbidden` for EICAR.
+- Confirmed the proxy AV profile used `set scan-mode default`; documented that proxy inspection architecture is not automatically legacy full-file AV.
+- Documented flow/proxy as policy-processing modes and stream/legacy as AV file-handling modes.
+- Created a harmless 2 MiB file and proved it downloaded completely with default Protocol Options.
+- Created `L05-PROTO-1MB` with oversized logging, HTTP/80 mapping, one-MiB threshold, and oversized blocking.
+- Proved the oversized flow transfer was reset near the threshold and the proxy transfer received `403 Forbidden`.
+- Confirmed `Event Type: oversize` and profile `L05-PROTO-1MB`, distinguishing a size/resource decision from a malware verdict.
+- Created paired benign and EICAR ZIP archives; the benign archive passed while the EICAR archive was blocked, proving content-aware archive inspection.
+- Kept FortiSandbox, current cloud-assisted verdicts, external malware lists, EMS feeds, production HTTPS deep inspection, and deployed legacy AV as theory only.
+- Added one harmless reproducible lab file, safe artifact-generation instructions, and 20 curated screenshots; raw EICAR/ZIP artifacts were intentionally excluded.
+- Recorded the last evidenced checkpoint as proxy AV plus `L05-PROTO-1MB`, while recommending `default` Protocol Options and flow AV for normal continuation on the constrained evaluation VM.
+
 ## 2026-08-17
 
 ### Lesson 04 - Firewall Authentication

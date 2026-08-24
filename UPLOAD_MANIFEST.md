@@ -1,52 +1,53 @@
 # GitHub Update Manifest
 
-Apply this Lesson 04 package to the existing repository root.
+Apply this Lesson 05 package to the existing repository root.
 
 ## Root updates
 
-- `README.md` - advance the integrated project to Lesson 04 and summarize the current identity-aware policy state.
-- `CHANGELOG.md` - record the local active-authentication implementation, validation, theory boundaries, and HTTPS rollback.
-- `REPOSITORY_STRUCTURE.md` - add the Lesson 04 directory and authentication evidence rules.
+- `README.md` - advance the integrated project to Lesson 05 and summarize the inspected identity-aware HTTP path.
+- `CHANGELOG.md` - record AV readiness, baselines, flow/proxy tests, logs, oversized handling, and archive inspection.
+- `REPOSITORY_STRUCTURE.md` - add the Lesson 05 directory, lab-file boundary, and AV evidence rules.
 - `UPLOAD_MANIFEST.md` - describe this update package.
 
-## New Lesson 04 content
+## New Lesson 05 content
 
-- `lessons/04-firewall-authentication/README.md` - compact theory/implementation narrative.
-- `lessons/04-firewall-authentication/evidence/README.md` - curated evidence index.
-- `lessons/04-firewall-authentication/evidence/*.png` - 15 sanitized proof artifacts.
+- `lessons/05-antivirus-inspection/README.md` - compact theory/implementation narrative with commands, configurations, results, troubleshooting, and cleanup.
+- `lessons/05-antivirus-inspection/lab-files/README.md` - controlled artifact-generation and safety instructions.
+- `lessons/05-antivirus-inspection/lab-files/benign.txt` - harmless 33-byte negative control.
+- `lessons/05-antivirus-inspection/evidence/README.md` - curated evidence index.
+- `lessons/05-antivirus-inspection/evidence/*.png` - 20 sanitized proof artifacts.
 
 ## Implemented and validated
 
-1. Protected Python HTTP service on Alpine loopback `10.60.60.100:80`.
-2. Diagnosis of the inherited broad policy that initially bypassed authentication.
-3. Local user and firewall group.
-4. Narrow identity-aware Policy ID `3` with both possible ECMP egress interfaces.
-5. Unauthenticated PING denial and HTTP interception.
-6. Browser form login and successful protected-resource access.
-7. Post-authentication PING through the existing IP-to-user mapping.
-8. Five-minute idle timeout and reauthentication.
-9. CLI and GUI firewall-user monitoring.
-10. Recording of effective global authentication settings.
+1. Restored the cumulative Alpine routing/service state and authenticated Kali path.
+2. Recorded AV engine, signature age, and evaluation limitations.
+3. Established benign and EICAR pre-AV baselines.
+4. Tested flow-based AV with a passing benign control and blocked EICAR control.
+5. Tested proxy-based AV with the same controls.
+6. Correlated Antivirus and Forward Traffic logs with identity, policy, NAT, and ECMP path context.
+7. Validated the FortiGate antivirus replacement page.
+8. Proved default versus one-MiB oversized-file behavior.
+9. Distinguished flow reset behavior from proxy `403` behavior.
+10. Proved benign ZIP acceptance and EICAR ZIP detection.
 
 ## Theory-only boundary
 
-- LDAP directory structure and FortiGate integration model
-- RADIUS AAA, ports, shared secret, and response types
-- server-based user/group authentication
-- passive authentication/FSSO
-- 2FA and FortiToken
-- production HTTPS portal design
-
-The temporary HTTPS redirect test is documented only as troubleshooting evidence. It failed TLS cipher negotiation and was rolled back. The final lab keeps `auth-secure-http disable`; no working HTTPS portal is claimed.
+- production-current FortiGuard signatures and cloud verdicts
+- Virus Outbreak Prevention service behavior
+- external malware block lists
+- EMS threat feeds
+- FortiSandbox submission/analysis
+- production HTTPS deep inspection
+- deployed legacy full-file AV
 
 ## Final-state cautions
 
-- Alpine is external to `LAB-LAN`; Kali and Metasploitable remain the LAN-side hosts.
-- Policy ID `3` is now `auth-lan-to-alpine`, not the inherited broad Lesson 03 policy.
-- Alpine's network state and Python HTTP process may require restoration after reboot.
-- LDAP and RADIUS were not installed on any lab host.
-- The HTTP authentication portal is acceptable only in this isolated educational lab.
+- The last captured test state uses proxy inspection, `L05-AV-PROXY`, and the intentionally restrictive `L05-PROTO-1MB` profile.
+- For normal continuation, restore `default` Protocol Options and preferably `L05-AV-FLOW` on the `1 vCPU / 2 GiB` evaluation VM.
+- Alpine's addresses, routes, HTTP process, and generated controls remain volatile.
+- EICAR is harmless but intentionally triggers security products; raw EICAR and ZIP artifacts are excluded.
+- The old definition databases support this deterministic lab only and are not evidence of current production protection.
 
 ## Packaging and sanitization
 
-The update contains documentation and curated screenshots only. It excludes credentials, license artifacts, private keys, reusable tokens, authentication cookies, raw backups, and unrelated screenshots.
+The update excludes credentials, authentication cookies, license artifacts, private keys, raw FortiGate backups, live malware, and raw EICAR artifacts. Screenshots are limited to those proving configuration, client behavior, or FortiGate security/log conclusions.

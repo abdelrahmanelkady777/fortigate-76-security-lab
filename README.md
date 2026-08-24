@@ -6,9 +6,9 @@ Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator c
 
 ## Current state
 
-**Current milestone: Lesson 04 - Firewall Authentication (Complete)**
+**Current milestone: Lesson 05 - Antivirus and Inspection Modes (Complete)**
 
-The Lesson 03 dual-routed/ECMP topology now carries an identity-aware application flow. Kali must authenticate as a member of `LAB-AUTH-USERS` before Policy ID `3` permits HTTP or PING to the Alpine loopback. Pre-authentication denial, browser login, post-authentication access, the five-minute idle timeout, and CLI/GUI user monitoring were validated. LDAP, RADIUS, 2FA/FortiToken, passive authentication, and production HTTPS portal design remain theory only.
+The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now carry inspected HTTP content. After Kali authenticates as `lab-local-user`, Policy ID `3` authorizes HTTP to Alpine's loopback and the attached AV profile independently permits the benign control or blocks EICAR. Flow/proxy behavior, replacement pages, AV and Forward Traffic logs, a one-MiB oversized-file control, and compressed archive inspection were validated. Current cloud-assisted protection and HTTPS deep inspection remain theory only under the evaluation environment.
 
 | Component | Current validated state |
 | --- | --- |
@@ -28,18 +28,23 @@ The Lesson 03 dual-routed/ECMP topology now carries an identity-aware applicatio
 | R2 | Gi0/0 `10.50.50.2/24`; Gi0/1 `10.40.40.1/24` |
 | Alpine upper path | eth2 `10.40.40.100/24` |
 | Shared ECMP destination | Alpine loopback `10.60.60.100/32` |
-| Alpine separate upstream | eth0 observed as `192.168.1.161/24`, default via `192.168.1.1` |
+| Alpine separate upstream | eth0 most recently observed as `192.168.1.24/24`, default via `192.168.1.1`; DHCP state is volatile |
 | FortiGate ECMP routes | `10.60.60.100/32` via R1 `10.30.30.2` and R2 `10.50.50.2`; both distance `10`, metric `0`, priority `1`, weight `0` |
 | FortiGate ECMP algorithm | `source-ip-based` |
 | Alpine ECMP | Equal-weight route to `10.10.10.0/24` through `10.20.20.1/eth1` and `10.40.40.1/eth2` |
 | ECMP proof | `.100` selected port3/R1; temporary `.110` selected port1/R2 |
-| Protected Lesson 04 resource | Python HTTP service on Alpine loopback `10.60.60.100:80` |
+| Protected application | Python HTTP service on Alpine loopback `10.60.60.100:80` |
 | Local firewall identity | `lab-local-user` in `LAB-AUTH-USERS` |
 | Identity-aware policy | Policy ID `3`, `auth-lan-to-alpine`; port2 to port1/port3; `KALI-CLIENT` + `LAB-AUTH-USERS` to `ALPINE-LOOPBACK`; `HTTP` and `PING`; NAT disabled |
 | Authentication behavior | HTTP form login creates an IP-to-user mapping; PING can reuse the mapping but cannot prompt |
 | Authentication lifetime | `5` minutes, `idle-timeout` |
 | Monitoring | `diagnose firewall auth list` and GUI Firewall User Monitor correlated |
 | HTTPS portal | Theory only in final state; temporary port 1003 test failed TLS cipher negotiation and was rolled back |
+| Lesson 05 AV controls | `L05-AV-FLOW` and `L05-AV-PROXY`; HTTP block action validated with benign/EICAR controls |
+| AV readiness boundary | AV Engine `7.00054`; base/extended definitions `1.00000` dated 2018; suitable for EICAR only, not current-threat claims |
+| Protocol Options experiment | `L05-PROTO-1MB`; oversized logging/blocking at `1 MB`; deliberately restrictive test object |
+| Archive inspection | benign ZIP allowed; EICAR ZIP blocked |
+| Last evidenced Lesson 05 checkpoint | Proxy policy with `L05-AV-PROXY` and `L05-PROTO-1MB`; restore `default` Protocol Options and preferably flow AV before general continuation |
 | Current management decision | port1 is no longer management; administration continues through port2/LAB-LAN |
 | FortiCare / FortiGuard subscriptions | Not included with the free evaluation |
 
@@ -76,7 +81,8 @@ The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.4
 | [02 - Firewall Policies and NAT](lessons/02-firewall-policies-nat/README.md) | Complete | Stateful policy behavior, matching/order/logging, SNAT/IP pools, VIP DNAT, and port forwarding |
 | [03 - Routing, Static Routes, and ECMP](lessons/03-routing-static-routes-ecmp/README.md) | Complete | Route lookup and attributes, Cisco/Alpine return routing, route-versus-policy behavior, dual routed paths, Alpine ECMP, shared loopback, and FortiGate source-IP ECMP proof |
 | [04 - Firewall Authentication](lessons/04-firewall-authentication/README.md) | Complete | Local active authentication, identity-aware policy enforcement, HTTP-triggered login, mapping reuse by PING, timeout, and user monitoring; remote authentication and 2FA retained as theory |
-| 05+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
+| [05 - Antivirus and Inspection Modes](lessons/05-antivirus-inspection/README.md) | Complete | Benign/EICAR controls, flow/proxy AV comparison, block page, log correlation, oversized-file enforcement, and compressed archive inspection |
+| 06+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
 
 The repository root describes the currently integrated project. Each lesson preserves the detailed implementation and its validated historical stages.
 
@@ -107,11 +113,19 @@ The repository root describes the currently integrated project. Each lesson pres
     │       ├── README.md
     │       ├── 19-final-dual-path-topology.png
     │       └── curated routing, policy, and ECMP proof artifacts
-    └── 04-firewall-authentication/
+    ├── 04-firewall-authentication/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       └── curated authentication, timeout, and monitoring proof
+    └── 05-antivirus-inspection/
         ├── README.md
+        ├── lab-files/
+        │   ├── README.md
+        │   └── benign.txt
         └── evidence/
             ├── README.md
-            └── curated authentication, timeout, and monitoring proof
+            └── curated AV, inspection-mode, log, size, and archive proof
 ```
 
 ## Project methodology
@@ -148,6 +162,15 @@ Lesson 04 adds identity-specific rules:
 - A broad unauthenticated policy can bypass a narrower authentication design.
 - PING cannot present a login form but can reuse an active mapping created through HTTP.
 - Theory-only LDAP, RADIUS, 2FA, passive authentication, and HTTPS hardening are not represented as deployed capabilities.
+
+Lesson 05 adds content-inspection rules:
+
+- Establish benign and known-detectable controls before enabling AV.
+- A firewall-policy accept and a later UTM deny are different decisions and should be correlated in separate logs.
+- Flow/proxy describes policy processing; stream/legacy describes AV file handling.
+- Oversized-file blocking is a resource/inspection-boundary decision, not a malware verdict.
+- Archive inspection is proven with paired benign and EICAR archives.
+- Old evaluation signatures support deterministic EICAR testing only, not a production-security claim.
 
 ## Evidence standard
 
@@ -187,6 +210,17 @@ after five idle minutes -> login required again
 GUI monitor == diagnose firewall auth list
 ```
 
+```text
+Antivirus/content-inspection proof
+before AV -> benign and EICAR both download
+flow AV -> benign passes; EICAR stream is reset/denied
+proxy AV -> benign passes; EICAR receives FortiGate 403/block page
+AV event -> infected EICAR verdict
+Forward Traffic -> authenticated user, Policy ID 3, NAT noop, selected ECMP egress
+protocol controls -> 2 MiB file passes by default and is blocked at the test 1 MiB threshold
+archive controls -> benign ZIP passes; EICAR ZIP is blocked
+```
+
 ## Evaluation-license constraint
 
 The permanent evaluation license used in this lab is intentionally restricted. The FortiGate reported:
@@ -199,7 +233,7 @@ The permanent evaluation license used in this lab is intentionally restricted. T
 - No FortiCare support
 - No FortiGuard support
 
-These limits directly shaped Lessons 03 and 04. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 then repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy.
+These limits directly shaped Lessons 03-05. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached security profiles to that same policy and recorded the old/unsubscribed signature state rather than claiming current FortiGuard protection.
 
 ## Historical Lesson 02 publication objects
 
@@ -216,6 +250,8 @@ They were not revalidated after port3 changed from the directly connected `10.20
 - Because `.110` is inside the LAB-LAN DHCP scope, it must be confirmed unused/reserved before any repeat test.
 - Alpine `ip addr` and `ip route` commands configure the live system and require separate persistent-network configuration or a preserved node state to survive reboot.
 - The Lesson 04 Python HTTP process on Alpine must also be restarted after node reboot unless made persistent.
+- Lesson 05's generated EICAR, large-file, and ZIP controls live under `/var/www/lesson04` and may disappear with node replacement; only the harmless control is committed.
+- `L05-PROTO-1MB` is a deliberately low test threshold. Restore `default` Protocol Options before ordinary continuation unless one-MiB blocking is explicitly desired.
 - Cisco running configurations require `copy running-config startup-config` if restart persistence is desired.
 - A production continuation should retain directional, explicit, least-privilege policies and a trusted HTTPS authentication portal.
 
