@@ -2,6 +2,27 @@
 
 All notable lab milestones are documented here.
 
+## 2026-08-26
+
+### Lesson 06 - Web Filtering
+
+- Preserved the dual-routed/ECMP topology, authenticated user, Alpine loopback application, and Policy ID `3`; no new interface, route, or firewall policy was consumed.
+- Restored Alpine's volatile eth1/eth2/loopback addresses, equal-weight route to `10.10.10.0/24`, transit return routes, and Python HTTP listener.
+- Removed the deliberately restrictive Lesson 05 continuation state by restoring flow inspection, `L05-AV-FLOW`, and `default` Protocol Options before introducing Web Filtering.
+- Created harmless allowed, monitored, and blocked HTML controls under `/var/www/lesson04/lesson06`.
+- Created flow profile `L06-WF-FLOW` with a Simple Block entry for `blocked.html` and a Simple Monitor entry for `monitored.html`; left `allowed.html` unmatched as the negative control.
+- Attached `L06-WF-FLOW` to the existing identity-aware Policy ID `3` alongside `L05-AV-FLOW`.
+- Proved the allowed control passed, Monitor returned HTTP `200` and produced an informational/passthrough event, and Block returned a FortiGate replacement page/HTTP `403`.
+- Correlated flow events with the exact URLs, profile `L06-WF-FLOW`, URL-filter indexes, and `Local URLfilter Block` source.
+- Diagnosed an initial failure caused by `/lesson6/blocked.html` in the Simple rule versus the actual `/lesson06/blocked.html` request.
+- Verified that policy UTM/profile attachment was correct before inspecting the URL-filter table, then corrected one character and recovered the intended block.
+- Created `L06-WF-PROXY` with the same corrected rules, sequentially switched Policy ID `3` to proxy inspection with `L05-AV-PROXY`, and repeated the Monitor/Block outcomes.
+- Recorded that flow and proxy produced the same visible URL-filter decision; no unsupported performance or behavior difference is claimed.
+- Ran `diagnose debug rating` and `get webfilter status`; Web-filter, Antispam, and Virus Outbreak Prevention reported disabled while local URL filtering remained functional.
+- Kept FortiGuard category filtering, category Allow/Block/Monitor/Warning/Authenticate/Quota actions, web rating overrides, SSL certificate inspection, HTTPS deep inspection, and HTTPS inspection order as theory only.
+- Returned the continuation design to flow mode with `L05-AV-FLOW`, `L06-WF-FLOW`, `default` Protocol Options, and NAT disabled.
+- Added three harmless reproducible HTML controls and 14 curated evidence artifacts; excluded credentials, cookies, private keys, raw backups, and license material.
+
 ## 2026-08-24
 
 ### Lesson 05 - Antivirus and Inspection Modes

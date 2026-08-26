@@ -6,9 +6,9 @@ Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator c
 
 ## Current state
 
-**Current milestone: Lesson 05 - Antivirus and Inspection Modes (Complete)**
+**Current milestone: Lesson 06 - Web Filtering (Complete)**
 
-The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now carry inspected HTTP content. After Kali authenticates as `lab-local-user`, Policy ID `3` authorizes HTTP to Alpine's loopback and the attached AV profile independently permits the benign control or blocks EICAR. Flow/proxy behavior, replacement pages, AV and Forward Traffic logs, a one-MiB oversized-file control, and compressed archive inspection were validated. Current cloud-assisted protection and HTTPS deep inspection remain theory only under the evaluation environment.
+The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now carry both antivirus and URL inspection. After Kali authenticates as `lab-local-user`, Policy ID `3` authorizes HTTP to Alpine's loopback; the inherited AV profile inspects content and `L06-WF-FLOW` evaluates requested URLs. Harmless allowed, monitored, and blocked pages prove local static URL behavior. Flow/proxy profiles, a FortiGate replacement page, exact-URL troubleshooting, and Web Filter logs were validated. FortiGuard category filtering, category actions, rating overrides, and SSL/HTTPS inspection remain theory only under the evaluation environment.
 
 | Component | Current validated state |
 | --- | --- |
@@ -28,7 +28,7 @@ The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now 
 | R2 | Gi0/0 `10.50.50.2/24`; Gi0/1 `10.40.40.1/24` |
 | Alpine upper path | eth2 `10.40.40.100/24` |
 | Shared ECMP destination | Alpine loopback `10.60.60.100/32` |
-| Alpine separate upstream | eth0 most recently observed as `192.168.1.24/24`, default via `192.168.1.1`; DHCP state is volatile |
+| Alpine separate upstream | eth0 most recently observed as `192.168.1.36/24`, default via `192.168.1.1`; DHCP state is volatile |
 | FortiGate ECMP routes | `10.60.60.100/32` via R1 `10.30.30.2` and R2 `10.50.50.2`; both distance `10`, metric `0`, priority `1`, weight `0` |
 | FortiGate ECMP algorithm | `source-ip-based` |
 | Alpine ECMP | Equal-weight route to `10.10.10.0/24` through `10.20.20.1/eth1` and `10.40.40.1/eth2` |
@@ -44,7 +44,10 @@ The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now 
 | AV readiness boundary | AV Engine `7.00054`; base/extended definitions `1.00000` dated 2018; suitable for EICAR only, not current-threat claims |
 | Protocol Options experiment | `L05-PROTO-1MB`; oversized logging/blocking at `1 MB`; deliberately restrictive test object |
 | Archive inspection | benign ZIP allowed; EICAR ZIP blocked |
-| Last evidenced Lesson 05 checkpoint | Proxy policy with `L05-AV-PROXY` and `L05-PROTO-1MB`; restore `default` Protocol Options and preferably flow AV before general continuation |
+| Lesson 06 HTTP controls | `allowed.html` unmatched/allowed; `monitored.html` allowed and logged; `blocked.html` denied by local URL filter |
+| Lesson 06 Web Filter profiles | `L06-WF-FLOW` and `L06-WF-PROXY`; identical Simple Block and Monitor intentions validated sequentially |
+| Final policy profile state | Policy ID `3`; flow-based; `L05-AV-FLOW`; `L06-WF-FLOW`; `default` Protocol Options; NAT disabled |
+| FortiGuard rating status | `diagnose debug rating` and `get webfilter status` reported Web-filter `Disable`; local URL filtering remains functional |
 | Current management decision | port1 is no longer management; administration continues through port2/LAB-LAN |
 | FortiCare / FortiGuard subscriptions | Not included with the free evaluation |
 
@@ -82,7 +85,8 @@ The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.4
 | [03 - Routing, Static Routes, and ECMP](lessons/03-routing-static-routes-ecmp/README.md) | Complete | Route lookup and attributes, Cisco/Alpine return routing, route-versus-policy behavior, dual routed paths, Alpine ECMP, shared loopback, and FortiGate source-IP ECMP proof |
 | [04 - Firewall Authentication](lessons/04-firewall-authentication/README.md) | Complete | Local active authentication, identity-aware policy enforcement, HTTP-triggered login, mapping reuse by PING, timeout, and user monitoring; remote authentication and 2FA retained as theory |
 | [05 - Antivirus and Inspection Modes](lessons/05-antivirus-inspection/README.md) | Complete | Benign/EICAR controls, flow/proxy AV comparison, block page, log correlation, oversized-file enforcement, and compressed archive inspection |
-| 06+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
+| [06 - Web Filtering](lessons/06-web-filtering/README.md) | Complete | Unmatched allow plus explicit local Monitor/Block behavior, flow/proxy profiles, replacement page, exact-match troubleshooting, and Web Filter log proof; FortiGuard categories and HTTPS inspection retained as theory |
+| 07+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
 
 The repository root describes the currently integrated project. Each lesson preserves the detailed implementation and its validated historical stages.
 
@@ -118,14 +122,24 @@ The repository root describes the currently integrated project. Each lesson pres
     │   └── evidence/
     │       ├── README.md
     │       └── curated authentication, timeout, and monitoring proof
-    └── 05-antivirus-inspection/
+    ├── 05-antivirus-inspection/
+    │   ├── README.md
+    │   ├── lab-files/
+    │   │   ├── README.md
+    │   │   └── benign.txt
+    │   └── evidence/
+    │       ├── README.md
+    │       └── curated AV, inspection-mode, log, size, and archive proof
+    └── 06-web-filtering/
         ├── README.md
         ├── lab-files/
         │   ├── README.md
-        │   └── benign.txt
+        │   ├── allowed.html
+        │   ├── blocked.html
+        │   └── monitored.html
         └── evidence/
             ├── README.md
-            └── curated AV, inspection-mode, log, size, and archive proof
+            └── curated Web Filter configuration, behavior, log, and troubleshooting proof
 ```
 
 ## Project methodology
@@ -171,6 +185,16 @@ Lesson 05 adds content-inspection rules:
 - Oversized-file blocking is a resource/inspection-boundary decision, not a malware verdict.
 - Archive inspection is proven with paired benign and EICAR archives.
 - Old evaluation signatures support deterministic EICAR testing only, not a production-security claim.
+
+Lesson 06 adds URL-control rules:
+
+- A policy accept and a later Web Filter block are separate decisions.
+- Local static URL filtering can be validated independently of FortiGuard category ratings.
+- An unmatched URL is the negative control; Monitor permits and logs; Block denies.
+- Flow/proxy Web Filter profiles must match the policy inspection architecture.
+- `Simple` URL entries are deterministic, so exact host/path characters matter.
+- Disabled FortiGuard rating status is documented instead of representing category actions as deployed.
+- Certificate inspection, deep inspection, and HTTPS path visibility remain theory when no trusted TLS design is implemented.
 
 ## Evidence standard
 
@@ -221,6 +245,15 @@ protocol controls -> 2 MiB file passes by default and is blocked at the test 1 M
 archive controls -> benign ZIP passes; EICAR ZIP is blocked
 ```
 
+```text
+Web Filtering proof
+allowed URL -> HTTP 200 with no explicit local match
+Monitor URL -> HTTP 200 plus passthrough/UTM-allowed Web Filter event
+Block URL -> HTTP 403/FortiGate replacement page
+event details -> exact URL, profile, table index, and Local URLfilter Block source
+proxy repeat -> same Monitor and Block intention under L06-WF-PROXY
+```
+
 ## Evaluation-license constraint
 
 The permanent evaluation license used in this lab is intentionally restricted. The FortiGate reported:
@@ -233,7 +266,7 @@ The permanent evaluation license used in this lab is intentionally restricted. T
 - No FortiCare support
 - No FortiGuard support
 
-These limits directly shaped Lessons 03-05. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached security profiles to that same policy and recorded the old/unsubscribed signature state rather than claiming current FortiGuard protection.
+These limits directly shaped Lessons 03-06. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached AV profiles to that same policy and recorded the old/unsubscribed signature state. Lesson 06 reused Policy ID `3` again, attached Web Filter profiles sequentially, and used local URL filtering rather than claiming unavailable FortiGuard category enforcement.
 
 ## Historical Lesson 02 publication objects
 
@@ -252,6 +285,8 @@ They were not revalidated after port3 changed from the directly connected `10.20
 - The Lesson 04 Python HTTP process on Alpine must also be restarted after node reboot unless made persistent.
 - Lesson 05's generated EICAR, large-file, and ZIP controls live under `/var/www/lesson04` and may disappear with node replacement; only the harmless control is committed.
 - `L05-PROTO-1MB` is a deliberately low test threshold. Restore `default` Protocol Options before ordinary continuation unless one-MiB blocking is explicitly desired.
+- Lesson 06's three harmless HTML controls live under `/var/www/lesson04/lesson06`; repository copies are retained under `lab-files/`.
+- `L06-WF-PROXY` remains as a validated sequential object; normal continuation returns Policy ID `3` to `L06-WF-FLOW` and `L05-AV-FLOW`.
 - Cisco running configurations require `copy running-config startup-config` if restart persistence is desired.
 - A production continuation should retain directional, explicit, least-privilege policies and a trusted HTTPS authentication portal.
 
