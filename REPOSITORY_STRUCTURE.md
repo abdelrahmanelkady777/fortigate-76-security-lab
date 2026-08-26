@@ -16,7 +16,8 @@ fortigate-76-security-lab/                 <- whole project
     ├── 03-routing-static-routes-ecmp/      <- Lesson 03
     ├── 04-firewall-authentication/        <- Lesson 04
     ├── 05-antivirus-inspection/            <- Lesson 05
-    ├── 06-<next-course-lab>/               <- future
+    ├── 06-web-filtering/                    <- Lesson 06
+    ├── 07-<next-course-lab>/               <- future
     └── _template/
 ```
 
@@ -58,14 +59,24 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │   └── evidence/
     │       ├── README.md
     │       └── 15 curated authentication proof artifacts
-    └── 05-antivirus-inspection/
+    ├── 05-antivirus-inspection/
+    │   ├── README.md
+    │   ├── lab-files/
+    │   │   ├── README.md
+    │   │   └── benign.txt
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 20 curated AV/inspection proof artifacts
+    └── 06-web-filtering/
         ├── README.md
         ├── lab-files/
         │   ├── README.md
-        │   └── benign.txt
+        │   ├── allowed.html
+        │   ├── blocked.html
+        │   └── monitored.html
         └── evidence/
             ├── README.md
-            └── 20 curated AV/inspection proof artifacts
+            └── 14 curated Web Filter proof artifacts
 ```
 
 ## Ownership rules
@@ -135,6 +146,19 @@ Lesson 05 continues the compact form. It distinguishes:
 
 The lesson reuses the authenticated Policy ID `3` and existing Alpine HTTP service instead of rebuilding routing or identity controls.
 
+Lesson 06 continues the compact form. It distinguishes:
+
+- policy authorization from a later Web Filter/UTM decision
+- an unmatched allowed URL from explicit Monitor and Block entries
+- flow and proxy feature-set profiles with identical local URL-filter intentions
+- local static URL filtering from unavailable FortiGuard category rating
+- static URL actions implemented in the lab from FortiGuard category actions retained as theory
+- a `Simple` exact-match typo from a policy/profile attachment failure
+- certificate inspection from deep inspection and the resulting HTTPS visibility boundary
+- the observed disabled rating-service status from successful local URL filtering
+
+The lesson reuses Policy ID `3`, `L05-AV-FLOW`/`L05-AV-PROXY`, the Alpine loopback HTTP service, and the existing identity mapping. It adds Web Filter profiles and three harmless reproducible HTML controls without consuming another policy.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -153,7 +177,7 @@ A topic is implemented only when it adds meaningful lab behavior. Theory can rem
 
 The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
 
-Lessons 02-04 reinforce several methodology rules:
+Lessons 02-06 reinforce several methodology rules:
 
 - established management infrastructure is preserved until a later design intentionally repurposes it and records the new access path
 - negative tests should change one match condition at a time
@@ -174,6 +198,11 @@ Lessons 02-04 reinforce several methodology rules:
 - flow/proxy behavior is compared without incorrectly equating proxy inspection with legacy full-file AV
 - Protocol Options limits are documented as inspection/resource boundaries
 - signature age and subscription limitations remain visible in the conclusion
+- Web Filtering is tested with unmatched allow, explicit Monitor, and explicit Block controls
+- local static URL behavior is kept separate from FortiGuard category behavior
+- feature-set compatibility is preserved when switching flow/proxy profiles sequentially
+- exact URL-table state is checked before blaming policy, routing, or licensing
+- disabled rating services and theory-only HTTPS inspection remain visible in the conclusion
 
 ## Evidence rule
 
@@ -194,6 +223,8 @@ For ECMP, a FortiGate sniffer trace must identify the request's actual egress in
 For firewall authentication, evidence should show the negative pre-authentication state, successful portal login, protected-resource access, the CLI/GUI user mapping, and timeout behavior. A login-page screenshot alone is not sufficient.
 
 For antivirus, evidence should show the profile/policy state, the benign and EICAR client outcomes, and a FortiGate security event that explains the verdict. Forward Traffic evidence should retain the authenticated identity and selected ECMP path. Large-file and archive claims require paired baselines so a size or file-extension assumption cannot replace content-aware proof.
+
+For Web Filtering, evidence should show the profile/policy attachment, the allowed/monitored/blocked client outcomes, and Web Filter events that identify the exact URL, profile, table index, and action source. A replacement page alone does not prove the intended profile matched. Exact-match troubleshooting should preserve both the incorrect URL-table state and the corrected result.
 
 ## Evaluation-license design rule
 
@@ -220,6 +251,8 @@ Lesson 03 applies this rule directly:
 Lesson 04 reuses Policy ID `3` as `auth-lan-to-alpine`. Both ECMP egress interfaces remain in the rule, but source, authenticated group, destination, and service are narrowed to the lesson's security intent.
 
 Lesson 05 continues to reuse Policy ID `3` and changes only its inspection/security-profile state between tests. `L05-PROTO-1MB` is an intentionally restrictive experiment and should not remain attached for ordinary continuation unless one-MiB blocking is explicitly required.
+
+Lesson 06 also reuses Policy ID `3`. `L06-WF-FLOW` and `L06-WF-PROXY` are attached sequentially with the matching AV feature set. The final continuation design returns to flow inspection with `default` Protocol Options, `L05-AV-FLOW`, and `L06-WF-FLOW`. FortiGuard category features are not represented as deployed under the unlicensed evaluation.
 
 ## Sanitization rule
 
