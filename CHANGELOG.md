@@ -2,6 +2,32 @@
 
 All notable lab milestones are documented here.
 
+## 2026-08-31
+
+### Lesson 07 - SSL and Certificate Inspection
+
+- Preserved the Lesson 03 ECMP topology, Lesson 04 identity-aware Policy ID `3`, Lesson 05 AV profiles, and Lesson 06 Web Filter profiles; no interface, route, or additional firewall-policy object was consumed.
+- Defined Lesson 07 as configuration-led because the permanent evaluation operates with low encryption and the lab has no managed certificate infrastructure.
+- Inspected the FortiGate certificate store and distinguished Local CA Certificate objects from Local Certificate objects.
+- Examined `Fortinet_CA_SSL` and confirmed `CA:TRUE`, Certificate Sign key usage, SHA-256 fingerprinting, and a validity window ending in August 2036.
+- Distinguished `Fortinet_CA_SSL` for normal inspection signing, `Fortinet_CA_Untrusted` for preserving an invalid-origin warning, and `Fortinet_GUI_Server` for management-plane HTTPS.
+- Compared no inspection, SSL certificate inspection, and full SSL/deep inspection without representing certificate inspection as partial payload decryption.
+- Compared outbound `Multiple Clients Connecting to Multiple Servers` with inbound `Protecting SSL Server`; recorded that the latter requires the protected server's certificate and private key.
+- Created `L07-CERT-INSPECTION` with HTTPS/443 certificate inspection, malicious-certificate blocking, SNI checking, ECH blocking, custom invalid-certificate handling, and SSL anomaly logging.
+- Customized `custom-deep-inspection` for outbound full SSL inspection using `Fortinet_CA_SSL` and an explicit `Lesson07 deep Inspection` comment.
+- Restricted deep-inspection protocol mapping to HTTPS/TCP 443; left SMTPS, POP3S, IMAPS, FTPS, DNS over TLS, and SSH deep scan disabled.
+- Configured HTTP/3 and DNS over QUIC to Block, documenting the intended TCP/TLS fallback without claiming it was traffic-tested.
+- Configured expired, revoked, and validation-failed certificates to Block; retained `Keep Untrusted & Allow` for validation timeout; enabled SSL anomaly logging.
+- Examined reputation, category, and FQDN/address exemption mechanisms, including Finance and Banking, Health and Wellness, and built-in application/update destinations.
+- Temporarily selected `ALPINE-LOOPBACK` as an explicit exemption, then removed it from the normal target path so the lesson destination was not silently excluded from the deep-inspection design.
+- Recorded cleanup of the accidental `alpineLoopBack` duplicate while retaining the established uppercase `ALPINE-LOOPBACK` object.
+- Attached `custom-deep-inspection` to Policy ID `3` alongside the flow AV/Web Filter continuation; left decrypted traffic mirroring disabled and Security-events logging enabled.
+- Downloaded `Fortinet_CA_SSL.cer`, examined the self-signed public CA certificate on Kali, and deliberately did not import it into the endpoint trust store.
+- Documented certificate pinning, HSTS, mutual TLS, QUIC/HTTP/3, DNS over QUIC, ECH, privacy exemptions, and the inspection visibility lost when traffic is exempted.
+- Explicitly skipped certificate/CSR/CA/remote-certificate/CRL import workflows, protected-server certificate deployment, endpoint trust, HTTPS traffic tests, and SSL log validation.
+- Preserved Lesson 06 as the latest data-plane validated state; Lesson 07 claims configuration and design intent only.
+- Added 12 curated certificate-store, SSL-profile, exemption, policy-attachment, and public-CA export artifacts while excluding private keys, raw backups, appliance-specific certificate files, credentials, cookies, and license material.
+
 ## 2026-08-26
 
 ### Lesson 06 - Web Filtering

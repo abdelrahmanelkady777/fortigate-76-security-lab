@@ -17,7 +17,8 @@ fortigate-76-security-lab/                 <- whole project
     ├── 04-firewall-authentication/        <- Lesson 04
     ├── 05-antivirus-inspection/            <- Lesson 05
     ├── 06-web-filtering/                    <- Lesson 06
-    ├── 07-<next-course-lab>/               <- future
+    ├── 07-ssl-certificate-inspection/       <- Lesson 07
+    ├── 08-<next-course-lab>/               <- future
     └── _template/
 ```
 
@@ -30,6 +31,7 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
 ├── README.md
 ├── CHANGELOG.md
 ├── REPOSITORY_STRUCTURE.md
+├── UPLOAD_MANIFEST.md
 ├── .gitignore
 └── lessons/
     ├── _template/
@@ -67,16 +69,21 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │   └── evidence/
     │       ├── README.md
     │       └── 20 curated AV/inspection proof artifacts
-    └── 06-web-filtering/
+    ├── 06-web-filtering/
+    │   ├── README.md
+    │   ├── lab-files/
+    │   │   ├── README.md
+    │   │   ├── allowed.html
+    │   │   ├── blocked.html
+    │   │   └── monitored.html
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 14 curated Web Filter proof artifacts
+    └── 07-ssl-certificate-inspection/
         ├── README.md
-        ├── lab-files/
-        │   ├── README.md
-        │   ├── allowed.html
-        │   ├── blocked.html
-        │   └── monitored.html
         └── evidence/
             ├── README.md
-            └── 14 curated Web Filter proof artifacts
+            └── 12 curated certificate/SSL configuration artifacts
 ```
 
 ## Ownership rules
@@ -102,10 +109,10 @@ Each lesson owns the detailed narrative for one implemented stage:
 2. starting state
 3. architecture delta
 4. exact configuration
-5. verification plan and observed results
+5. verification plan and observed results, or an explicit unperformed boundary
 6. FortiGate diagnostics/control-plane state
 7. troubleshooting and operational decisions
-8. final validated result
+8. final validated or configuration-only result
 9. cleanup/rollback
 10. lessons learned
 11. evidence
@@ -159,6 +166,21 @@ Lesson 06 continues the compact form. It distinguishes:
 
 The lesson reuses Policy ID `3`, `L05-AV-FLOW`/`L05-AV-PROXY`, the Alpine loopback HTTP service, and the existing identity mapping. It adds Web Filter profiles and three harmless reproducible HTML controls without consuming another policy.
 
+Lesson 07 remains compact but changes the evidence model. It distinguishes:
+
+- certificate inspection from full SSL/deep inspection
+- handshake/certificate visibility from decrypted payload visibility
+- outbound multiple-client inspection from inbound protected-server inspection
+- `Fortinet_CA_SSL`, `Fortinet_CA_Untrusted`, and `Fortinet_GUI_Server` warning contexts
+- public CA distribution from protected private-key possession
+- definite certificate validation failure from validation timeout
+- privacy/compatibility exemptions from ordinary allowed inspection
+- HSTS from certificate pinning and mutual TLS
+- TLS/TCP from QUIC/HTTP/3, DNS over QUIC, and ECH
+- configuration proof from data-plane, endpoint-trust, and SSL-log proof
+
+The lesson reuses Policy ID `3` and the flow AV/Web Filter continuation. It adds SSL/SSH profiles and a policy attachment without claiming successful HTTPS interception under the low-encryption evaluation. The appliance-specific exported CA file and all private-key material remain outside the repository.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -177,7 +199,7 @@ A topic is implemented only when it adds meaningful lab behavior. Theory can rem
 
 The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
 
-Lessons 02-06 reinforce several methodology rules:
+Lessons 02-07 reinforce several methodology rules:
 
 - established management infrastructure is preserved until a later design intentionally repurposes it and records the new access path
 - negative tests should change one match condition at a time
@@ -203,6 +225,12 @@ Lessons 02-06 reinforce several methodology rules:
 - feature-set compatibility is preserved when switching flow/proxy profiles sequentially
 - exact URL-table state is checked before blaming policy, routing, or licensing
 - disabled rating services and theory-only HTTPS inspection remain visible in the conclusion
+- certificate inspection is not described as partial payload decryption
+- endpoint trust, TLS interception, and security-profile inspection are separate claims
+- warning certificates are documented by role instead of treated as interchangeable
+- exemptions are documented as deliberate reductions in payload visibility
+- application and transport compatibility includes pinning, HSTS, mutual TLS, QUIC, and ECH
+- a configuration-only lesson explicitly marks data-plane and log evidence as unavailable
 
 ## Evidence rule
 
@@ -225,6 +253,8 @@ For firewall authentication, evidence should show the negative pre-authenticatio
 For antivirus, evidence should show the profile/policy state, the benign and EICAR client outcomes, and a FortiGate security event that explains the verdict. Forward Traffic evidence should retain the authenticated identity and selected ECMP path. Large-file and archive claims require paired baselines so a size or file-extension assumption cannot replace content-aware proof.
 
 For Web Filtering, evidence should show the profile/policy attachment, the allowed/monitored/blocked client outcomes, and Web Filter events that identify the exact URL, profile, table index, and action source. A replacement page alone does not prove the intended profile matched. Exact-match troubleshooting should preserve both the incorrect URL-table state and the corrected result.
+
+For Lesson 07, GUI evidence proves certificate inventory, profile fields, exemptions, policy attachment, and public-CA export only. It does not prove endpoint trust, successful TLS interception, decrypted payload visibility, HTTPS AV/Web Filter enforcement, QUIC/ECH fallback, or protected-server operation. The missing layers are recorded as an evaluation/PKI boundary rather than filled with inferred behavior.
 
 ## Evaluation-license design rule
 
@@ -253,6 +283,8 @@ Lesson 04 reuses Policy ID `3` as `auth-lan-to-alpine`. Both ECMP egress interfa
 Lesson 05 continues to reuse Policy ID `3` and changes only its inspection/security-profile state between tests. `L05-PROTO-1MB` is an intentionally restrictive experiment and should not remain attached for ordinary continuation unless one-MiB blocking is explicitly required.
 
 Lesson 06 also reuses Policy ID `3`. `L06-WF-FLOW` and `L06-WF-PROXY` are attached sequentially with the matching AV feature set. The final continuation design returns to flow inspection with `default` Protocol Options, `L05-AV-FLOW`, and `L06-WF-FLOW`. FortiGuard category features are not represented as deployed under the unlicensed evaluation.
+
+Lesson 07 again reuses Policy ID `3` for SSL-profile attachment. The low-encryption license and missing managed-PKI path prevent a meaningful end-to-end deep-inspection claim, so the lesson retains configuration evidence and recommends `no-inspection` for ordinary encrypted traffic on this evaluation VM. `Fortinet_CA_SSL.cer` is not committed or installed into Kali, and `Fortinet_CA_Untrusted` must never be distributed as a trusted root.
 
 ## Sanitization rule
 
