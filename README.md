@@ -1,16 +1,16 @@
 # FortiGate 7.6 Security Lab
 
-Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator course. The repository is developed incrementally: each lesson starts from a known-good state, adds one administration or network-security capability, validates it from the client/data plane and FortiGate control plane, and records the engineering decisions and troubleshooting behind the result.
+Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator course. The repository is developed incrementally: each lesson starts from a known-good state, adds one administration or network-security capability, validates it from the client/data plane and FortiGate control plane where the environment permits, and records the engineering decisions, limitations, and troubleshooting behind the result.
 
 > This is an independent educational lab. It is not official Fortinet course material.
 
 ## Current state
 
-**Current milestone: Lesson 06 - Web Filtering (Complete)**
+**Current milestone: Lesson 07 - SSL and Certificate Inspection (Complete, configuration-led)**
 
-The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now carry both antivirus and URL inspection. After Kali authenticates as `lab-local-user`, Policy ID `3` authorizes HTTP to Alpine's loopback; the inherited AV profile inspects content and `L06-WF-FLOW` evaluates requested URLs. Harmless allowed, monitored, and blocked pages prove local static URL behavior. Flow/proxy profiles, a FortiGate replacement page, exact-URL troubleshooting, and Web Filter logs were validated. FortiGuard category filtering, category actions, rating overrides, and SSL/HTTPS inspection remain theory only under the evaluation environment.
+The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy carry the validated antivirus and URL-inspection stack from Lessons 05-06. Lesson 07 adds certificate-store analysis, certificate-versus-deep-inspection profiles, protocol and certificate-validation decisions, exemptions, public-CA export, and SSL profile attachment to Policy ID `3`. Because the evaluation VM is restricted to low-encryption operation and no managed PKI is deployed, Lesson 06 remains the latest data-plane validated state; Lesson 07 proves configuration and design intent without claiming successful TLS decryption or HTTPS security-profile enforcement.
 
-| Component | Current validated state |
+| Component | Current documented state |
 | --- | --- |
 | Platform | EVE-NG / QEMU-KVM |
 | Appliance | FortiGate-VM64-KVM |
@@ -46,8 +46,13 @@ The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy now 
 | Archive inspection | benign ZIP allowed; EICAR ZIP blocked |
 | Lesson 06 HTTP controls | `allowed.html` unmatched/allowed; `monitored.html` allowed and logged; `blocked.html` denied by local URL filter |
 | Lesson 06 Web Filter profiles | `L06-WF-FLOW` and `L06-WF-PROXY`; identical Simple Block and Monitor intentions validated sequentially |
-| Final policy profile state | Policy ID `3`; flow-based; `L05-AV-FLOW`; `L06-WF-FLOW`; `default` Protocol Options; NAT disabled |
+| Latest data-plane validated policy state | Lesson 06: Policy ID `3`; flow-based; `L05-AV-FLOW`; `L06-WF-FLOW`; `default` Protocol Options; NAT disabled |
 | FortiGuard rating status | `diagnose debug rating` and `get webfilter status` reported Web-filter `Disable`; local URL filtering remains functional |
+| Lesson 07 certificate roles | `Fortinet_CA_SSL` for normal inspection signing; `Fortinet_CA_Untrusted` for preserving origin warnings; `Fortinet_GUI_Server` for management HTTPS |
+| Lesson 07 inspection profiles | `L07-CERT-INSPECTION`, customized `custom-deep-inspection`, and studied `L07-PROTECT-SERVER` context |
+| Lesson 07 deep-inspection scope | HTTPS/TCP 443 only; HTTP/3 and DNS over QUIC blocked; invalid-certificate actions explicit; SSL exemptions studied |
+| Lesson 07 policy checkpoint | Policy ID `3` retained flow AV/Web Filter profiles and selected `custom-deep-inspection`; decrypted traffic mirror off |
+| Lesson 07 validation boundary | Configuration and public-CA export only; no endpoint trust, TLS decryption, HTTPS UTM, SSL-log, QUIC/ECH-fallback, or protected-server validation |
 | Current management decision | port1 is no longer management; administration continues through port2/LAB-LAN |
 | FortiCare / FortiGuard subscriptions | Not included with the free evaluation |
 
@@ -86,7 +91,8 @@ The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.4
 | [04 - Firewall Authentication](lessons/04-firewall-authentication/README.md) | Complete | Local active authentication, identity-aware policy enforcement, HTTP-triggered login, mapping reuse by PING, timeout, and user monitoring; remote authentication and 2FA retained as theory |
 | [05 - Antivirus and Inspection Modes](lessons/05-antivirus-inspection/README.md) | Complete | Benign/EICAR controls, flow/proxy AV comparison, block page, log correlation, oversized-file enforcement, and compressed archive inspection |
 | [06 - Web Filtering](lessons/06-web-filtering/README.md) | Complete | Unmatched allow plus explicit local Monitor/Block behavior, flow/proxy profiles, replacement page, exact-match troubleshooting, and Web Filter log proof; FortiGuard categories and HTTPS inspection retained as theory |
-| 07+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
+| [07 - SSL and Certificate Inspection](lessons/07-ssl-certificate-inspection/README.md) | Complete (configuration-led) | Certificate roles and stores, certificate/deep inspection comparison, validation actions, exemptions, modern TLS compatibility, CA export, and policy attachment; no decryption claim under the low-encryption evaluation |
+| 08+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
 
 The repository root describes the currently integrated project. Each lesson preserves the detailed implementation and its validated historical stages.
 
@@ -130,16 +136,21 @@ The repository root describes the currently integrated project. Each lesson pres
     │   └── evidence/
     │       ├── README.md
     │       └── curated AV, inspection-mode, log, size, and archive proof
-    └── 06-web-filtering/
+    ├── 06-web-filtering/
+    │   ├── README.md
+    │   ├── lab-files/
+    │   │   ├── README.md
+    │   │   ├── allowed.html
+    │   │   ├── blocked.html
+    │   │   └── monitored.html
+    │   └── evidence/
+    │       ├── README.md
+    │       └── curated Web Filter configuration, behavior, log, and troubleshooting proof
+    └── 07-ssl-certificate-inspection/
         ├── README.md
-        ├── lab-files/
-        │   ├── README.md
-        │   ├── allowed.html
-        │   ├── blocked.html
-        │   └── monitored.html
         └── evidence/
             ├── README.md
-            └── curated Web Filter configuration, behavior, log, and troubleshooting proof
+            └── 12 curated certificate, SSL-profile, exemption, policy, and CA-export artifacts
 ```
 
 ## Project methodology
@@ -195,6 +206,17 @@ Lesson 06 adds URL-control rules:
 - `Simple` URL entries are deterministic, so exact host/path characters matter.
 - Disabled FortiGuard rating status is documented instead of representing category actions as deployed.
 - Certificate inspection, deep inspection, and HTTPS path visibility remain theory when no trusted TLS design is implemented.
+
+Lesson 07 adds TLS trust and configuration-boundary rules:
+
+- Certificate inspection reads handshake/certificate metadata; deep inspection terminates and rebuilds TLS.
+- `Fortinet_CA_SSL`, `Fortinet_CA_Untrusted`, and `Fortinet_GUI_Server` represent different trust and warning contexts.
+- A managed endpoint may trust the public inspection CA, but the appliance private signing key must never be distributed.
+- HSTS does not inherently defeat a correctly trusted inspection design; certificate pinning can reject the replacement identity independently.
+- Mutual TLS, QUIC/HTTP/3, DNS over QUIC, and ECH require explicit compatibility decisions.
+- An exemption preserves end-to-end TLS at the cost of decrypted-payload visibility.
+- A saved GUI profile and policy attachment are configuration proof, not data-plane decryption proof.
+- Low-encryption and PKI limits are recorded instead of representing SSL logs or HTTPS inspection as validated.
 
 ## Evidence standard
 
@@ -254,6 +276,16 @@ event details -> exact URL, profile, table index, and Local URLfilter Block sour
 proxy repeat -> same Monitor and Block intention under L06-WF-PROXY
 ```
 
+```text
+SSL/certificate configuration evidence
+certificate store -> CA and local-certificate roles identified
+certificate inspection -> handshake/certificate controls configured
+deep inspection -> HTTPS mapping, validation actions, and exemptions configured
+policy checkpoint -> custom-deep-inspection selected on Policy ID 3
+CA export -> public Fortinet_CA_SSL certificate downloaded but not trusted on Kali
+data plane -> deliberately not claimed under the low-encryption/no-PKI boundary
+```
+
 ## Evaluation-license constraint
 
 The permanent evaluation license used in this lab is intentionally restricted. The FortiGate reported:
@@ -266,7 +298,7 @@ The permanent evaluation license used in this lab is intentionally restricted. T
 - No FortiCare support
 - No FortiGuard support
 
-These limits directly shaped Lessons 03-06. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached AV profiles to that same policy and recorded the old/unsubscribed signature state. Lesson 06 reused Policy ID `3` again, attached Web Filter profiles sequentially, and used local URL filtering rather than claiming unavailable FortiGuard category enforcement.
+These limits directly shaped Lessons 03-07. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached AV profiles to that same policy and recorded the old/unsubscribed signature state. Lesson 06 reused Policy ID `3` again, attached Web Filter profiles sequentially, and used local URL filtering rather than claiming unavailable FortiGuard category enforcement. Lesson 07 again reused Policy ID `3`, but stopped at SSL configuration proof because low-encryption operation and the missing managed-PKI path made a meaningful deep-inspection validation unavailable.
 
 ## Historical Lesson 02 publication objects
 
@@ -287,6 +319,10 @@ They were not revalidated after port3 changed from the directly connected `10.20
 - `L05-PROTO-1MB` is a deliberately low test threshold. Restore `default` Protocol Options before ordinary continuation unless one-MiB blocking is explicitly desired.
 - Lesson 06's three harmless HTML controls live under `/var/www/lesson04/lesson06`; repository copies are retained under `lab-files/`.
 - `L06-WF-PROXY` remains as a validated sequential object; normal continuation returns Policy ID `3` to `L06-WF-FLOW` and `L05-AV-FLOW`.
+- Lesson 07's explicit `ALPINE-LOOPBACK` SSL exemption was temporary; leaving the target exempt would contradict a deep-inspection test design.
+- Keep the canonical `ALPINE-LOOPBACK` object and remove the accidental unused `alpineLoopBack` duplicate after confirming zero references.
+- `Fortinet_CA_SSL.cer` was examined locally but is not committed or installed into Kali's trusted-root store.
+- On the low-encryption evaluation VM, use `no-inspection` for ordinary encrypted traffic and attach the Lesson 07 profiles only for configuration study unless a supported trust/test design is introduced.
 - Cisco running configurations require `copy running-config startup-config` if restart persistence is desired.
 - A production continuation should retain directional, explicit, least-privilege policies and a trusted HTTPS authentication portal.
 
