@@ -18,7 +18,8 @@ fortigate-76-security-lab/                 <- whole project
     ├── 05-antivirus-inspection/            <- Lesson 05
     ├── 06-web-filtering/                    <- Lesson 06
     ├── 07-ssl-certificate-inspection/       <- Lesson 07
-    ├── 08-<next-course-lab>/               <- future
+    ├── 08-ips-application-control/          <- Lesson 08
+    ├── 09-<next-course-lab>/               <- future
     └── _template/
 ```
 
@@ -79,11 +80,20 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │   └── evidence/
     │       ├── README.md
     │       └── 14 curated Web Filter proof artifacts
-    └── 07-ssl-certificate-inspection/
+    ├── 07-ssl-certificate-inspection/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 12 curated certificate/SSL configuration artifacts
+    └── 08-ips-application-control/
         ├── README.md
+        ├── lab-files/
+        │   ├── README.md
+        │   ├── baseline.html
+        │   └── bittorrent-responder.py
         └── evidence/
             ├── README.md
-            └── 12 curated certificate/SSL configuration artifacts
+            └── 23 curated IPS/Application Control proof artifacts
 ```
 
 ## Ownership rules
@@ -181,6 +191,21 @@ Lesson 07 remains compact but changes the evidence model. It distinguishes:
 
 The lesson reuses Policy ID `3` and the flow AV/Web Filter continuation. It adds SSL/SSH profiles and a policy attachment without claiming successful HTTPS interception under the low-encryption evaluation. The appliance-specific exported CA file and all private-key material remain outside the repository.
 
+Lesson 08 returns to full three-layer traffic validation. It distinguishes:
+
+- firewall-policy authorization from later IPS/Application Control decisions
+- Monitor observation from Block enforcement using the same EICAR signature
+- descriptive sensor names from the entry action FortiGate actually enforces
+- request direction from the response direction in which a signature matches
+- service/port selection from payload-based application identity
+- category Monitor from exact application Block overrides
+- HTTP replacement behavior from non-HTTP payloads carried on TCP/80
+- non-default-port enforcement from Network Protocol Enforcement intent
+- deterministic old-signature controls from current production coverage
+- light-load process evidence from a capacity claim
+
+The lesson reuses Policy ID `3`, records temporary sequential states honestly, removes exemptions and overrides after testing, and includes only harmless reproducible controls. The raw EICAR file remains outside the repository.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -199,7 +224,7 @@ A topic is implemented only when it adds meaningful lab behavior. Theory can rem
 
 The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
 
-Lessons 02-07 reinforce several methodology rules:
+Lessons 02-08 reinforce several methodology rules:
 
 - established management infrastructure is preserved until a later design intentionally repurposes it and records the new access path
 - negative tests should change one match condition at a time
@@ -231,6 +256,13 @@ Lessons 02-07 reinforce several methodology rules:
 - exemptions are documented as deliberate reductions in payload visibility
 - application and transport compatibility includes pinning, HSTS, mutual TLS, QUIC, and ECH
 - a configuration-only lesson explicitly marks data-plane and log evidence as unavailable
+- policy acceptance is kept separate from IPS and Application Control verdicts
+- Monitor-before-Block provides a controlled inspection baseline
+- signature exemptions follow the packet direction at match time
+- application identity is not inferred from a TCP service or port alone
+- exact application overrides are distinguished from category actions
+- protocol/service mismatch theory is tied to an observed payload experiment without inventing an unperformed verdict
+- security-database age and observed workload bound threat-coverage and performance claims
 
 ## Evidence rule
 
@@ -255,6 +287,8 @@ For antivirus, evidence should show the profile/policy state, the benign and EIC
 For Web Filtering, evidence should show the profile/policy attachment, the allowed/monitored/blocked client outcomes, and Web Filter events that identify the exact URL, profile, table index, and action source. A replacement page alone does not prove the intended profile matched. Exact-match troubleshooting should preserve both the incorrect URL-table state and the corrected result.
 
 For Lesson 07, GUI evidence proves certificate inventory, profile fields, exemptions, policy attachment, and public-CA export only. It does not prove endpoint trust, successful TLS interception, decrypted payload visibility, HTTPS AV/Web Filter enforcement, QUIC/ECH fallback, or protected-server operation. The missing layers are recorded as an evaluation/PKI boundary rather than filled with inferred behavior.
+
+For Lesson 08, evidence should pair benign and known-signature controls, then correlate Monitor/Block client outcomes with IPS or Application Control events. Exemption evidence must retain both the unsuccessful request-direction assumption and the corrected response direction. Port/protocol claims must preserve the service (`HTTP`) and the detected payload application (`BitTorrent`) in the same experiment. A replacement page alone is insufficient without the application event or configured override.
 
 ## Evaluation-license design rule
 
@@ -285,6 +319,8 @@ Lesson 05 continues to reuse Policy ID `3` and changes only its inspection/secur
 Lesson 06 also reuses Policy ID `3`. `L06-WF-FLOW` and `L06-WF-PROXY` are attached sequentially with the matching AV feature set. The final continuation design returns to flow inspection with `default` Protocol Options, `L05-AV-FLOW`, and `L06-WF-FLOW`. FortiGuard category features are not represented as deployed under the unlicensed evaluation.
 
 Lesson 07 again reuses Policy ID `3` for SSL-profile attachment. The low-encryption license and missing managed-PKI path prevent a meaningful end-to-end deep-inspection claim, so the lesson retains configuration evidence and recommends `no-inspection` for ordinary encrypted traffic on this evaluation VM. `Fortinet_CA_SSL.cer` is not committed or installed into Kali, and `Fortinet_CA_Untrusted` must never be distributed as a trusted root.
+
+Lesson 08 reuses Policy ID `3` again for `L08-IPS-MONITOR` and `L08-APP-MONITOR`. It uses exact local EICAR and BitTorrent controls because current FortiGuard subscriptions are unavailable. The IPS exemption, exact application overrides, and non-default-port setting are sequential test states, not simultaneous final controls. The final profile returns all application categories to Monitor and retains `fail-open disable`.
 
 ## Sanitization rule
 
