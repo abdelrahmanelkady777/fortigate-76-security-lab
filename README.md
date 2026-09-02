@@ -6,9 +6,9 @@ Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator c
 
 ## Current state
 
-**Current milestone: Lesson 07 - SSL and Certificate Inspection (Complete, configuration-led)**
+**Current milestone: Lesson 08 - Intrusion Prevention and Application Control (Complete, data-plane validated)**
 
-The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy carry the validated antivirus and URL-inspection stack from Lessons 05-06. Lesson 07 adds certificate-store analysis, certificate-versus-deep-inspection profiles, protocol and certificate-validation decisions, exemptions, public-CA export, and SSL profile attachment to Policy ID `3`. Because the evaluation VM is restricted to low-encryption operation and no managed PKI is deployed, Lesson 06 remains the latest data-plane validated state; Lesson 07 proves configuration and design intent without claiming successful TLS decryption or HTTPS security-profile enforcement.
+The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware Policy ID `3` now carry the validated AV, Web Filter, IPS, and Application Control stack. Lesson 08 adds deterministic EICAR signature enforcement, packet-direction-aware exemptions, botnet-monitoring boundaries, payload-based application identification, exact application overrides, non-default-port enforcement, protocol/service correlation, and IPS health/fail-open analysis. The installed security databases are old, so the result proves local mechanics and log correlation rather than current production threat coverage.
 
 | Component | Current documented state |
 | --- | --- |
@@ -46,13 +46,19 @@ The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware policy carr
 | Archive inspection | benign ZIP allowed; EICAR ZIP blocked |
 | Lesson 06 HTTP controls | `allowed.html` unmatched/allowed; `monitored.html` allowed and logged; `blocked.html` denied by local URL filter |
 | Lesson 06 Web Filter profiles | `L06-WF-FLOW` and `L06-WF-PROXY`; identical Simple Block and Monitor intentions validated sequentially |
-| Latest data-plane validated policy state | Lesson 06: Policy ID `3`; flow-based; `L05-AV-FLOW`; `L06-WF-FLOW`; `default` Protocol Options; NAT disabled |
+| Latest data-plane validated policy state | Lesson 08: Policy ID `3`; flow-based; `L05-AV-FLOW`; `L06-WF-FLOW`; `L08-IPS-MONITOR`; `L08-APP-MONITOR`; `default` Protocol Options; `no-inspection`; NAT disabled |
 | FortiGuard rating status | `diagnose debug rating` and `get webfilter status` reported Web-filter `Disable`; local URL filtering remains functional |
 | Lesson 07 certificate roles | `Fortinet_CA_SSL` for normal inspection signing; `Fortinet_CA_Untrusted` for preserving origin warnings; `Fortinet_GUI_Server` for management HTTPS |
 | Lesson 07 inspection profiles | `L07-CERT-INSPECTION`, customized `custom-deep-inspection`, and studied `L07-PROTECT-SERVER` context |
 | Lesson 07 deep-inspection scope | HTTPS/TCP 443 only; HTTP/3 and DNS over QUIC blocked; invalid-certificate actions explicit; SSL exemptions studied |
 | Lesson 07 policy checkpoint | Policy ID `3` retained flow AV/Web Filter profiles and selected `custom-deep-inspection`; decrypted traffic mirror off |
 | Lesson 07 validation boundary | Configuration and public-CA export only; no endpoint trust, TLS decryption, HTTPS UTM, SSL-log, QUIC/ECH-fallback, or protected-server validation |
+| Lesson 08 database boundary | IPS/Application/Proxy Application DB `6.00741` dated 2015; deterministic EICAR and BitTorrent controls only |
+| Lesson 08 IPS sensor | `L08-IPS-MONITOR`; exact EICAR signature `29844` Block; packet logging enabled; no exemption; botnet C&C Monitor; malicious-URL blocking disabled |
+| IPS validation | EICAR Monitor delivered 68 bytes and logged Accept; Block denied the same transfer while benign HTTP remained `200`; response-direction exemption was proved and removed |
+| Lesson 08 Application Control | `L08-APP-MONITOR`; all categories Monitor; temporary exact overrides removed; non-default-port blocking and NPE disabled in final state |
+| Application validation | Firefox and BitTorrent identified; BitTorrent detected on TCP/80, then denied by exact override and non-default-port enforcement; Firefox received the HTTP replacement page |
+| IPS health / failure decision | Light-load sample: 100% idle CPU, 53.2% memory; `ipsengine`/`ipshelper` sleeping; global `fail-open disable` |
 | Current management decision | port1 is no longer management; administration continues through port2/LAB-LAN |
 | FortiCare / FortiGuard subscriptions | Not included with the free evaluation |
 
@@ -92,7 +98,8 @@ The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.4
 | [05 - Antivirus and Inspection Modes](lessons/05-antivirus-inspection/README.md) | Complete | Benign/EICAR controls, flow/proxy AV comparison, block page, log correlation, oversized-file enforcement, and compressed archive inspection |
 | [06 - Web Filtering](lessons/06-web-filtering/README.md) | Complete | Unmatched allow plus explicit local Monitor/Block behavior, flow/proxy profiles, replacement page, exact-match troubleshooting, and Web Filter log proof; FortiGuard categories and HTTPS inspection retained as theory |
 | [07 - SSL and Certificate Inspection](lessons/07-ssl-certificate-inspection/README.md) | Complete (configuration-led) | Certificate roles and stores, certificate/deep inspection comparison, validation actions, exemptions, modern TLS compatibility, CA export, and policy attachment; no decryption claim under the low-encryption evaluation |
-| 08+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
+| [08 - Intrusion Prevention and Application Control](lessons/08-ips-application-control/README.md) | Complete | EICAR Monitor/Block/exemption controls, packet-log correlation, Firefox/BitTorrent identification, exact overrides, replacement behavior, port/protocol correlation, and IPS health/fail-open analysis |
+| 09+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
 
 The repository root describes the currently integrated project. Each lesson preserves the detailed implementation and its validated historical stages.
 
@@ -146,11 +153,20 @@ The repository root describes the currently integrated project. Each lesson pres
     │   └── evidence/
     │       ├── README.md
     │       └── curated Web Filter configuration, behavior, log, and troubleshooting proof
-    └── 07-ssl-certificate-inspection/
+    ├── 07-ssl-certificate-inspection/
+    │   ├── README.md
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 12 curated certificate, SSL-profile, exemption, policy, and CA-export artifacts
+    └── 08-ips-application-control/
         ├── README.md
+        ├── lab-files/
+        │   ├── README.md
+        │   ├── baseline.html
+        │   └── bittorrent-responder.py
         └── evidence/
             ├── README.md
-            └── 12 curated certificate, SSL-profile, exemption, policy, and CA-export artifacts
+            └── 23 curated IPS, Application Control, client, log, and health artifacts
 ```
 
 ## Project methodology
@@ -217,6 +233,19 @@ Lesson 07 adds TLS trust and configuration-boundary rules:
 - An exemption preserves end-to-end TLS at the cost of decrypted-payload visibility.
 - A saved GUI profile and policy attachment are configuration proof, not data-plane decryption proof.
 - Low-encryption and PKI limits are recorded instead of representing SSL logs or HTTPS inspection as validated.
+
+Lesson 08 adds intrusion- and application-inspection rules:
+
+- A firewall-policy accept and a later IPS/Application Control deny are separate decisions.
+- Monitor-before-Block establishes a data-plane baseline before enforcement.
+- A sensor name is descriptive; the configured entry action controls behavior.
+- IPS exemptions follow the packet direction in which the signature matches.
+- Firewall service selection is port-based, while Application Control is payload-based.
+- Exact application overrides are more specific than filter overrides and category actions.
+- HTTP replacement messages require HTTP behavior, not only TCP/80.
+- Application identity, non-default-port use, and protocol/service conformance are related but distinct checks.
+- Old application/IPS databases support deterministic controls only, not current production coverage.
+- IPS performance and fail-open conclusions remain bounded to observed load and configuration.
 
 ## Evidence standard
 
@@ -286,6 +315,18 @@ CA export -> public Fortinet_CA_SSL certificate downloaded but not trusted on Ka
 data plane -> deliberately not claimed under the low-encryption/no-PKI boundary
 ```
 
+```text
+IPS/Application Control proof
+benign HTTP -> 200 before and after EICAR enforcement
+EICAR Monitor -> 68 bytes delivered plus IPS Accept event
+EICAR Block -> transfer denied plus IPS Deny event
+IPS exemption -> request direction fails; response direction allows; removal restores blocking
+Firefox Monitor -> HTTP.BROWSER_Firefox identified and accepted
+BitTorrent on TCP/80 -> firewall service HTTP, application BitTorrent/P2P
+exact override/non-default-port -> BitTorrent denied
+health -> light-load baseline plus fail-open disable configuration
+```
+
 ## Evaluation-license constraint
 
 The permanent evaluation license used in this lab is intentionally restricted. The FortiGate reported:
@@ -298,7 +339,7 @@ The permanent evaluation license used in this lab is intentionally restricted. T
 - No FortiCare support
 - No FortiGuard support
 
-These limits directly shaped Lessons 03-07. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached AV profiles to that same policy and recorded the old/unsubscribed signature state. Lesson 06 reused Policy ID `3` again, attached Web Filter profiles sequentially, and used local URL filtering rather than claiming unavailable FortiGuard category enforcement. Lesson 07 again reused Policy ID `3`, but stopped at SSL configuration proof because low-encryption operation and the missing managed-PKI path made a meaningful deep-inspection validation unavailable.
+These limits directly shaped Lessons 03-08. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached AV profiles to that same policy and recorded the old/unsubscribed signature state. Lesson 06 reused Policy ID `3` again, attached Web Filter profiles sequentially, and used local URL filtering rather than claiming unavailable FortiGuard category enforcement. Lesson 07 again reused Policy ID `3`, but stopped at SSL configuration proof because low-encryption operation and the missing managed-PKI path made a meaningful deep-inspection validation unavailable. Lesson 08 reused Policy ID `3` for IPS and Application Control, used fixed local signatures instead of subscription-dependent claims, and recorded the light-load performance boundary.
 
 ## Historical Lesson 02 publication objects
 
@@ -323,6 +364,10 @@ They were not revalidated after port3 changed from the directly connected `10.20
 - Keep the canonical `ALPINE-LOOPBACK` object and remove the accidental unused `alpineLoopBack` duplicate after confirming zero references.
 - `Fortinet_CA_SSL.cer` was examined locally but is not committed or installed into Kali's trusted-root store.
 - On the low-encryption evaluation VM, use `no-inspection` for ordinary encrypted traffic and attach the Lesson 07 profiles only for configuration study unless a supported trust/test design is introduced.
+- Lesson 08's harmless baseline and BitTorrent responder are retained under `lab-files/`; the EICAR control must be generated only inside the isolated lab.
+- `L08-IPS-MONITOR` is a sequentially reused object: its final EICAR action is Block despite the descriptive name.
+- The temporary IPS exemption, exact Application Control overrides, and non-default-port block were removed after validation.
+- Normal Lesson 08 continuation keeps `L08-APP-MONITOR` category actions on Monitor, NPE off, and IPS `fail-open disable`.
 - Cisco running configurations require `copy running-config startup-config` if restart persistence is desired.
 - A production continuation should retain directional, explicit, least-privilege policies and a trusted HTTPS authentication portal.
 

@@ -1,74 +1,70 @@
 # GitHub Update Manifest
 
-Apply this **delta-only Lesson 07 package** to the existing repository root.
+Apply this **delta-only Lesson 08 package** to the existing repository root.
 
-The package contains only new or modified paths. It does not include cloned copies of Lessons 00-06 or an entire repository export.
+The package contains only new or modified paths. It does not include cloned copies of Lessons 00-07, the `.git` directory, or an entire repository export.
 
 ## Replacement root files
 
-- `README.md` - advance the project to Lesson 07 while preserving Lesson 06 as the latest data-plane validated state.
-- `CHANGELOG.md` - record certificate operations, profile configuration, theory, exclusions, cleanup, and evidence boundaries.
-- `REPOSITORY_STRUCTURE.md` - add the Lesson 07 directory and configuration-only evidence rules.
+- `README.md` - advance the integrated project to the data-plane-validated Lesson 08 state.
+- `CHANGELOG.md` - record the IPS/Application Control implementation, tests, troubleshooting, cleanup, and evidence boundaries.
+- `REPOSITORY_STRUCTURE.md` - add the Lesson 08 directory and its methodology/evidence rules.
 - `UPLOAD_MANIFEST.md` - describe this delta-only update.
 
-## New Lesson 07 content
+## New Lesson 08 content
 
-- `lessons/07-ssl-certificate-inspection/README.md` - certificate foundations, exact GUI configuration, comparisons, warnings, compatibility theory, policy attachment, limitations, and engineering conclusions.
-- `lessons/07-ssl-certificate-inspection/evidence/README.md` - curated evidence index and claim boundary.
-- `lessons/07-ssl-certificate-inspection/evidence/*.png` - 12 sanitized certificate-store, SSL-profile, exemption, policy-attachment, and public-CA export artifacts.
+- `lessons/08-ips-application-control/README.md` - implementation, theory tied to the lab, exact controls, troubleshooting, verification, final state, and embedded evidence.
+- `lessons/08-ips-application-control/evidence/README.md` - curated evidence index and claim boundary.
+- `lessons/08-ips-application-control/evidence/*.png` - 23 sanitized configuration, client, event, troubleshooting, and health artifacts.
+- `lessons/08-ips-application-control/lab-files/README.md` - safe deployment and reproduction instructions.
+- `lessons/08-ips-application-control/lab-files/baseline.html` - harmless HTTP negative control.
+- `lessons/08-ips-application-control/lab-files/bittorrent-responder.py` - safe one-shot BitTorrent-handshake responder.
 
-No `lab-files/` directory is added because the lesson did not deploy an HTTPS server, traffic generator, endpoint trust package, or reproducible payload test. The appliance-specific downloaded CA certificate is intentionally excluded.
+## Implemented and validated
 
-## Configured and studied
+1. Restored Alpine addressing, loopback, return routes, and the HTTP service.
+2. Recorded the old IPS/Application database boundary before making security claims.
+3. Created `L08-IPS-MONITOR` with exact EICAR signature `29844` and packet logging.
+4. Proved EICAR Monitor delivered 68 bytes and generated an Accept event.
+5. Changed only the EICAR action to Block and proved the transfer failed while benign HTTP remained `200`.
+6. Correlated IPS events with the authenticated user/group, policy path, URL, method, signature, profile, and result.
+7. Diagnosed request-versus-response direction in a narrow IPS exemption, corrected it, proved delivery, removed it, and restored blocking.
+8. Retained botnet C&C Monitor as a harmless negative control and left stale malicious-URL enforcement disabled.
+9. Created `L08-APP-MONITOR`, normalized all categories to Monitor, and attached it to Policy ID `3` with IPS/AV/Web Filter.
+10. Proved Firefox identification and safe BitTorrent identification on TCP/80.
+11. Proved service/port (`HTTP`) and payload application (`BitTorrent`) are independent classification layers.
+12. Proved exact BitTorrent and Firefox Block overrides, including an HTTP Application Control replacement page.
+13. Temporarily proved non-default-port blocking for BitTorrent/TCP-80.
+14. Tied Network Protocol Enforcement theory to the same payload/service mismatch without claiming an independent NPE verdict.
+15. Removed temporary overrides and non-default-port enforcement; retained all categories Monitor and NPE disabled.
+16. Recorded light-load system/process performance and verified global IPS `fail-open disable`.
 
-1. Inspected Local CA Certificate and Local Certificate inventories.
-2. Verified `Fortinet_CA_SSL` is a signing CA through `CA:TRUE` and Certificate Sign properties.
-3. Distinguished the roles of `Fortinet_CA_SSL`, `Fortinet_CA_Untrusted`, and `Fortinet_GUI_Server`.
-4. Compared no inspection, certificate inspection, and full SSL/deep inspection.
-5. Compared outbound multiple-client inspection with inbound protected-server inspection.
-6. Created `L07-CERT-INSPECTION` for HTTPS/443 certificate inspection with explicit certificate, SNI, ECH, HTTP/3, validation, and logging decisions.
-7. Customized `custom-deep-inspection` for outbound full SSL inspection using `Fortinet_CA_SSL`.
-8. Limited protocol mapping to HTTPS/TCP 443 and blocked HTTP/3 and DNS over QUIC.
-9. Configured explicit expired, revoked, validation-timeout, and validation-failed actions.
-10. Examined reputation, category, and address/FQDN exemptions.
-11. Temporarily demonstrated `ALPINE-LOOPBACK` as an explicit exemption, then removed it from the normal target path.
-12. Attached `custom-deep-inspection` to existing Policy ID `3` with decrypted traffic mirroring disabled.
-13. Downloaded and examined the public `Fortinet_CA_SSL.cer` certificate without installing it into Kali's trusted roots.
-14. Documented certificate pinning, HSTS, mutual TLS, QUIC/HTTP/3, DNS over QUIC, ECH, and the visibility cost of exemptions.
-15. Recorded cleanup of the accidental `alpineLoopBack` duplicate while retaining canonical `ALPINE-LOOPBACK`.
+## Final retained state
 
-## Warning-type comparison retained
+| Component | State |
+| --- | --- |
+| Policy ID `3` | Identity-aware HTTP/PING; flow inspection; all-session logging; NAT disabled |
+| Existing UTM | `L05-AV-FLOW`, `L06-WF-FLOW`, default Protocol Options |
+| SSL inspection | `no-inspection` for this HTTP lesson |
+| IPS | `L08-IPS-MONITOR`; EICAR Block; packet logging; no exemption; botnet C&C Monitor |
+| IPS malicious URL | Disabled |
+| Application Control | `L08-APP-MONITOR`; all categories Monitor; no exact/filter overrides |
+| Non-default-port block / NPE | Disabled |
+| DNS logging / HTTP replacement messages | Enabled |
+| IPS fail-open | Disabled |
 
-- `Fortinet_CA_SSL`: a normally valid deep-inspected site warns when the endpoint does not trust FortiGate's inspection CA.
-- `Fortinet_CA_Untrusted`: FortiGate preserves an invalid origin certificate warning when access is permitted; this CA must never be trusted on endpoints.
-- `Fortinet_GUI_Server`: a separate management-plane warning can result from self-signing or management IP/FQDN mismatch.
-
-## Explicit validation boundary
+## Explicit claim boundary
 
 The update does not claim:
 
-- endpoint trust deployment
-- successful TLS interception or decrypted payload visibility
-- HTTPS AV, Web Filter, IPS, or application-control enforcement
-- SSL anomaly/security-event validation
-- HTTP/3, QUIC, or ECH fallback behavior
-- protected-server inspection with a real server certificate/private key
-- certificate pinning, HSTS-failure, or mutual-TLS compatibility tests
-- imported local/CA/remote certificates, CSRs, or CRLs
-- production PKI readiness
-
-Lesson 06 therefore remains the latest traffic-validated milestone. Lesson 07 is complete as a certificate/SSL configuration and design lesson under the evaluation constraint.
-
-## Final-state cautions
-
-- `custom-deep-inspection` is retained as the configured study object.
-- `L07-CERT-INSPECTION` is retained as the certificate-inspection comparison object.
-- `L07-PROTECT-SERVER` has no deployed server certificate/private-key path.
-- Use `no-inspection` for ordinary encrypted traffic on the low-encryption evaluation VM unless a supported trust/test design is introduced.
-- The temporary Alpine SSL exemption must not remain when that destination is meant to represent inspected traffic.
-- Remove the accidental lowercase duplicate only after confirming it has zero references.
-- The exported public CA is appliance-specific and is not included in the package.
+- current production threat or application-signature coverage;
+- contact with or detection of a live botnet C&C endpoint;
+- IPS malicious-URL enforcement;
+- an independent Network Protocol Enforcement verdict;
+- high-load capacity or performance scaling;
+- observed traffic behavior during an IPS engine failure;
+- HTTPS payload inspection under the low-encryption evaluation.
 
 ## Packaging and sanitization
 
-The update excludes credentials, authentication cookies, license artifacts, private keys, certificate bundles, the exported appliance CA file, raw FortiGate backups, FortiGuard account material, unrelated screenshots, and all prior lesson directories.
+The update excludes the raw EICAR file, generated EICAR downloads, credentials, authentication cookies, license artifacts, private keys, certificate bundles, raw FortiGate backups, FortiGuard account material, unrelated screenshots, all prior lesson directories, and Git metadata.

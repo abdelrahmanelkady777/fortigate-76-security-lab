@@ -2,6 +2,33 @@
 
 All notable lab milestones are documented here.
 
+## 2026-09-02
+
+### Lesson 08 - Intrusion Prevention and Application Control
+
+- Preserved the Lesson 03 ECMP topology, Lesson 04 authenticated Policy ID `3`, and the Lesson 05-06 flow AV/Web Filter continuation; no new interface, route, or firewall policy was consumed.
+- Restored Alpine's volatile addresses, loopback, remote-transit routes, equal-weight return route, and Python HTTP service before introducing inspection changes.
+- Recorded IPS/Application/Proxy Application database `6.00741` and the 2015 malicious-URL database; bounded the lesson to deterministic EICAR and BitTorrent mechanics rather than current-threat claims.
+- Created `L08-IPS-MONITOR` with exact `Eicar.Virus.Test.File` signature ID `29844`, enabled status, and packet logging.
+- Proved Monitor delivered the complete 68-byte control while recording an IPS Accept event with profile, signature, URL, method, user/group, ingress, destination, and ECMP egress.
+- Changed only the exact signature action to Block; proved the EICAR transfer failed while harmless `baseline.html` still returned HTTP `200` and the IPS result changed to Deny.
+- Retained the sensor name across sequential states and documented that FortiGate enforces the configured entry action, not the descriptive object name.
+- Tested a narrow IPS exemption, diagnosed that the signature matched in the server-response direction, reversed the pair to Alpine source/Kali destination, proved HTTP `200` and 68-byte delivery, then removed the exemption and restored blocking.
+- Set botnet C&C checking to Monitor and used harmless traffic as a negative control; did not contact a live C&C destination.
+- Left IPS malicious-URL blocking disabled because the installed database is stale and local URL filtering is already validated in Lesson 06.
+- Created `L08-APP-MONITOR`, normalized every category to Monitor, enabled DNS logging and HTTP replacement messages, and left overrides, Network Protocol Enforcement, and non-default-port blocking empty/disabled for the baseline.
+- Attached IPS and Application Control to Policy ID `3` alongside `L05-AV-FLOW` and `L06-WF-FLOW`, using flow inspection, `no-inspection`, all-session logging, and NAT disabled.
+- Proved normal Firefox traffic was accepted and identified as `HTTP.BROWSER_Firefox`.
+- Replaced the HTTP listener temporarily with a safe one-shot responder and sent a deterministic 68-byte BitTorrent handshake to TCP/80.
+- Proved the firewall service remained HTTP while Application Control identified BitTorrent ID `6`, P2P category, and detected/Accept behavior from payload inspection.
+- Added an exact BitTorrent Block override while leaving P2P Monitor and proved the same handshake was denied, demonstrating exact-application precedence over the category action.
+- Added an exact Firefox Block override and validated the FortiGate Application Control replacement page; documented why non-HTTP BitTorrent traffic does not receive a friendly page merely because it uses TCP/80.
+- Temporarily enabled non-default-port blocking and proved BitTorrent on TCP/80 was denied; correlated the same service/payload mismatch to Network Protocol Enforcement theory without claiming an independent NPE verdict.
+- Removed temporary application overrides and non-default-port enforcement; retained all categories Monitor and NPE disabled in the final profile.
+- Recorded a light-load performance baseline: 100% idle CPU, approximately 53.2% memory use, and sleeping `ipsengine`/`ipshelper` processes.
+- Verified IPS global `fail-open disable` and documented the availability-versus-inspection-integrity tradeoff without inducing an engine failure.
+- Added harmless baseline and BitTorrent responder files plus 23 curated configuration, client, event, troubleshooting, and health artifacts; excluded raw EICAR, credentials, cookies, private keys, backups, and license material.
+
 ## 2026-08-31
 
 ### Lesson 07 - SSL and Certificate Inspection
