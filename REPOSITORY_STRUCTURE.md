@@ -19,7 +19,8 @@ fortigate-76-security-lab/                 <- whole project
     ├── 06-web-filtering/                    <- Lesson 06
     ├── 07-ssl-certificate-inspection/       <- Lesson 07
     ├── 08-ips-application-control/          <- Lesson 08
-    ├── 09-<next-course-lab>/               <- future
+    ├── 09-site-to-site-ipsec-vpn/           <- Lesson 09
+    ├── 10-<next-course-lab>/               <- future
     └── _template/
 ```
 
@@ -85,15 +86,25 @@ This mirrors the organization used by the FortiWeb project: the root summarizes 
     │   └── evidence/
     │       ├── README.md
     │       └── 12 curated certificate/SSL configuration artifacts
-    └── 08-ips-application-control/
+    ├── 08-ips-application-control/
+    │   ├── README.md
+    │   ├── lab-files/
+    │   │   ├── README.md
+    │   │   ├── baseline.html
+    │   │   └── bittorrent-responder.py
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 23 curated IPS/Application Control proof artifacts
+    └── 09-site-to-site-ipsec-vpn/
         ├── README.md
-        ├── lab-files/
+        ├── configs/
         │   ├── README.md
-        │   ├── baseline.html
-        │   └── bittorrent-responder.py
+        │   ├── hq-fortigate.conf
+        │   ├── branch-fortigate.conf
+        │   └── supporting-routing.txt
         └── evidence/
             ├── README.md
-            └── 23 curated IPS/Application Control proof artifacts
+            └── 7 curated routing/IPsec/traffic proof artifacts
 ```
 
 ## Ownership rules
@@ -206,6 +217,19 @@ Lesson 08 returns to full three-layer traffic validation. It distinguishes:
 
 The lesson reuses Policy ID `3`, records temporary sequential states honestly, removes exemptions and overrides after testing, and includes only harmless reproducible controls. The raw EICAR file remains outside the repository.
 
+Lesson 09 changes the integrated topology and distinguishes:
+
+- peer underlay reachability from protected-subnet reachability
+- physical peer interfaces from route-based IPsec virtual interfaces
+- the Phase 1 IKE SA from the two directional Phase 2 IPsec SAs
+- Phase 1 proposals protecting negotiation from Phase 2 proposals protecting user data
+- route lookup, firewall-policy matching, selector matching, and ESP processing
+- stateful return traffic from a new session initiated by the opposite site
+- traffic-triggered SA establishment from proactive Auto-negotiate/keepalive behavior
+- laboratory `DES-SHA1` compatibility from a production cryptographic recommendation
+
+The lesson retires the active ECMP continuation without rewriting Lesson 03 history, records all changed FortiGate/R1/Alpine routing, and keeps full configurations sanitized. It uses client behavior, tunnel diagnostics, and GUI status as independent proof layers.
+
 ### `lessons/NN-<name>/evidence/`
 
 Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
@@ -224,7 +248,7 @@ A topic is implemented only when it adds meaningful lab behavior. Theory can rem
 
 The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
 
-Lessons 02-08 reinforce several methodology rules:
+Lessons 02-09 reinforce several methodology rules:
 
 - established management infrastructure is preserved until a later design intentionally repurposes it and records the new access path
 - negative tests should change one match condition at a time
@@ -263,6 +287,11 @@ Lessons 02-08 reinforce several methodology rules:
 - exact application overrides are distinguished from category actions
 - protocol/service mismatch theory is tied to an observed payload experiment without inventing an unperformed verdict
 - security-database age and observed workload bound threat-coverage and performance claims
+- an IPsec underlay is validated before protected-subnet routes and policies are added
+- route-based protected-subnet routes select the VPN interface, not the physical peer next hop
+- IKE and IPsec SAs are diagnosed separately from routing and firewall policy
+- both initiation directions are explicit even though return traffic is statefully permitted
+- a lost first packet can be valid evidence of on-demand SA establishment when correlated with later tunnel state
 
 ## Evidence rule
 
@@ -289,6 +318,8 @@ For Web Filtering, evidence should show the profile/policy attachment, the allow
 For Lesson 07, GUI evidence proves certificate inventory, profile fields, exemptions, policy attachment, and public-CA export only. It does not prove endpoint trust, successful TLS interception, decrypted payload visibility, HTTPS AV/Web Filter enforcement, QUIC/ECH fallback, or protected-server operation. The missing layers are recorded as an evaluation/PKI boundary rather than filled with inferred behavior.
 
 For Lesson 08, evidence should pair benign and known-signature controls, then correlate Monitor/Block client outcomes with IPS or Application Control events. Exemption evidence must retain both the unsuccessful request-direction assumption and the corrected response direction. Port/protocol claims must preserve the service (`HTTP`) and the detected payload application (`BitTorrent`) in the same experiment. A replacement page alone is insufficient without the application event or configured override.
+
+For Lesson 09, evidence should show a pre-VPN negative control, final VPN-interface routes, on-demand client behavior, Phase 2 selector status, reverse-direction traffic, and independent GUI tunnel state. Sanitized text configurations replace screenshots that expose PSK material. A green tunnel icon alone is insufficient without endpoint and selector evidence.
 
 ## Evaluation-license design rule
 
@@ -321,6 +352,8 @@ Lesson 06 also reuses Policy ID `3`. `L06-WF-FLOW` and `L06-WF-PROXY` are attach
 Lesson 07 again reuses Policy ID `3` for SSL-profile attachment. The low-encryption license and missing managed-PKI path prevent a meaningful end-to-end deep-inspection claim, so the lesson retains configuration evidence and recommends `no-inspection` for ordinary encrypted traffic on this evaluation VM. `Fortinet_CA_SSL.cer` is not committed or installed into Kali, and `Fortinet_CA_Untrusted` must never be distributed as a trusted root.
 
 Lesson 08 reuses Policy ID `3` again for `L08-IPS-MONITOR` and `L08-APP-MONITOR`. It uses exact local EICAR and BitTorrent controls because current FortiGuard subscriptions are unavailable. The IPS exemption, exact application overrides, and non-default-port setting are sequential test states, not simultaneous final controls. The final profile returns all application categories to Monitor and retains `fail-open disable`.
+
+Lesson 09 gives each FortiGate its own three-interface/three-policy/three-route budget. HQ reuses Policy ID `3` for one VPN direction and adds one reverse policy; Branch uses two policies. The old shared-loopback routes are removed, protected routes point to VPN interfaces, and Branch port3 is reserved for evaluation registration. The low-encryption restriction is why the demonstrated peers use `DES-SHA1`; the repository never recommends that proposal for production.
 
 ## Sanitization rule
 

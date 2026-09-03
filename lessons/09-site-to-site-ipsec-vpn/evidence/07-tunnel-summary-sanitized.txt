@@ -1,0 +1,11 @@
+Sanitized control-plane excerpt
+================================
+
+Command:
+get vpn ipsec tunnel summary
+
+Relevant observed result:
+'HQ-to-Branch' 10.50.50.2:0 selectors(total,up): 1/1
+
+The appliance prompt/serial-derived hostname and nonessential packet-counter
+columns were omitted. The screenshot source is intentionally not committed.
