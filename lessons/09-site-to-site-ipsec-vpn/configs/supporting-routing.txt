@@ -1,0 +1,50 @@
+Lesson 09 supporting network changes
+====================================
+
+R1 retained interfaces and HQ-LAN return route
+------------------------------------------------
+interface GigabitEthernet0/0
+ ip address 10.20.20.1 255.255.255.0
+ no shutdown
+!
+interface GigabitEthernet0/1
+ ip address 10.30.30.2 255.255.255.0
+ no shutdown
+!
+ip route 10.10.10.0 255.255.255.0 10.30.30.1
+
+R1 removed the obsolete Lesson 03 shared-loopback route
+--------------------------------------------------------
+no ip route 10.60.60.100 255.255.255.255 10.20.20.100
+
+Persist Cisco changes after verification
+-----------------------------------------
+copy running-config startup-config
+
+Alpine live interface and routing state
+---------------------------------------
+ip link set eth1 up
+ip addr replace 10.20.20.100/24 dev eth1
+ip link set eth2 up
+ip addr replace 10.40.40.100/24 dev eth2
+
+# Remove the old ECMP/shared target if still present.
+ip addr del 10.60.60.100/32 dev lo
+
+# Replace Lesson 03 ECMP with the deterministic Branch return path.
+ip route replace 10.10.10.0/24 via 10.40.40.1 dev eth2
+
+Verification used in the lab
+----------------------------
+ip addr show
+ip route show
+ping -c 3 10.40.40.1
+ping -c 3 10.20.20.1
+ping -c 3 10.10.10.100
+
+Notes
+-----
+- `ip` changes are live-state changes and require persistent Alpine network
+  configuration or a preserved EVE node state to survive reboot.
+- The final `10.10.10.0/24` route deliberately prefers the Branch FortiGate;
+  R1 remains connected for inherited routing study but is not the VPN return path.

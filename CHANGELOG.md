@@ -2,6 +2,31 @@
 
 All notable lab milestones are documented here.
 
+## 2026-09-03
+
+### Lesson 09 - Route-Based Site-to-Site IPsec VPN
+
+- Replaced the Lesson 03 upper-path R2 router with a second FortiGate while preserving HQ LAN `10.10.10.0/24`, Branch-side Alpine `10.40.40.100/24`, and the lower R1 path as inherited routing context.
+- Licensed the Branch evaluation VM and assigned port1 `10.50.50.2/24`, port2 `10.40.40.1/24`, and port3 DHCP/default routing for registration only.
+- Retained HQ port1 `10.50.50.1/24` as the direct VPN underlay, port2 `10.10.10.1/24`, and port3 `10.30.30.1/24` toward R1.
+- Removed the active shared-loopback/ECMP continuation: deleted Alpine `10.60.60.100/32`, removed R1's route to it, and replaced Alpine's equal-weight HQ route with `10.10.10.0/24 via 10.40.40.1`.
+- Retained R1's `10.10.10.0/24 via 10.30.30.1` route and HQ's `10.20.20.0/24 via 10.30.30.2` route.
+- Proved direct `10.50.50.1 <-> 10.50.50.2` underlay reachability and both Alpine gateway adjacencies before configuring IPsec.
+- Removed the temporary plaintext HQ route to Branch LAN and recorded Kali's pre-VPN `Destination Net Unreachable` result as the negative control.
+- Deliberately selected IKEv1 Main Mode with PSK, `DES-SHA1`, DH14, DPD on-idle, NAT-T disabled, and an 86400-second Phase 1 lifetime on both peers.
+- Configured tunnel-mode Phase 2 with mirrored `10.10.10.0/24 <-> 10.40.40.0/24` selectors, `DES-SHA1`, PFS/DH14, replay detection, and a 43200-second lifetime.
+- Disabled Auto-negotiate and Autokey Keep Alive so interesting traffic would establish the SAs on demand.
+- Recovered from two GUI `-61: Input not as expected` errors by confirming no Phase 1/2 objects were created, reviewing an unrelated config-error log, and committing the intended design through CLI.
+- Corrected initial route drafts that used peer addresses on physical port1; the final routes select `HQ-to-Branch` and `Branch-to-HQ` virtual interfaces with no gateway.
+- Reused HQ Policy ID `3` for HQ-initiated VPN traffic, added the HQ reverse-initiation policy, and created two Branch policies so either site can start a new session.
+- Limited all VPN policies to PING/HTTP, enabled all-session logging, and disabled NAT and UTM profiles for the transport-focused test.
+- Observed the correct pre-traffic state: protected-subnet routes were known but inactive while the IPsec interfaces/SAs were down.
+- Triggered negotiation from Kali; the first echo timed out during IKE/Phase 2 establishment and the next two reached Alpine.
+- Verified `get vpn ipsec tunnel summary` reported one configured selector and `1/1` up; the Branch GUI independently reported the tunnel Up.
+- Proved Branch-initiated operation with Alpine-to-Kali PING receiving 3/3 replies.
+- Added sanitized HQ/Branch configurations, supporting R1/Alpine routing commands, seven curated evidence artifacts, and a complete route-policy-selector-encryption-decryption packet-cycle explanation.
+- Retained AH, IKEv2, certificate authentication, transport mode, policy-based IPsec, NAT-T operation, remote access, redundant/mesh designs, and hardware offload as theory rather than deployed claims.
+
 ## 2026-09-02
 
 ### Lesson 08 - Intrusion Prevention and Application Control

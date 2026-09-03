@@ -6,47 +6,44 @@ Hands-on FortiGate lab built in EVE-NG alongside the FortiOS 7.6 Administrator c
 
 ## Current state
 
-**Current milestone: Lesson 08 - Intrusion Prevention and Application Control (Complete, data-plane validated)**
+**Current milestone: Lesson 09 - Route-Based Site-to-Site IPsec VPN (Complete, bidirectionally validated)**
 
-The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware Policy ID `3` now carry the validated AV, Web Filter, IPS, and Application Control stack. Lesson 08 adds deterministic EICAR signature enforcement, packet-direction-aware exemptions, botnet-monitoring boundaries, payload-based application identification, exact application overrides, non-default-port enforcement, protocol/service correlation, and IPS health/fail-open analysis. The installed security databases are old, so the result proves local mechanics and log correlation rather than current production threat coverage.
+Lesson 09 replaces the Lesson 03 upper-path router with a second FortiGate and converts that segment into a route-based site-to-site VPN. HQ `10.10.10.0/24` and Branch `10.40.40.0/24` now communicate through mirrored IKEv1/ESP tunnel-mode configuration, VPN-interface routes, explicit directional policies, and traffic-triggered Phase 2 establishment. Earlier security-profile and ECMP lessons remain valid historical milestones; the current integrated state is the two-FortiGate transport lab.
 
 | Component | Current documented state |
 | --- | --- |
 | Platform | EVE-NG / QEMU-KVM |
-| Appliance | FortiGate-VM64-KVM |
+| Appliances | Two FortiGate-VM64-KVM instances: HQ and Branch |
 | FortiOS | `v7.6.7 build 3704` |
 | vCPU / RAM | `1 vCPU / 2048 MB` |
-| Evaluation limits used by this design | Maximum `3` interfaces, `3` firewall policies, and `3` routes |
-| FortiGate `port2` | Alias `LAB-LAN`, `10.10.10.1/24`; current GUI/client access |
+| Evaluation limits used by this design | Per VM: maximum `3` interfaces, `3` firewall policies, and `3` routes; low-encryption mode |
+| HQ `port2` | Alias `LAB-LAN`, `10.10.10.1/24`; GUI/client access |
 | LAB-LAN DHCP | `10.10.10.100-10.10.10.150` |
-| Kali | `10.10.10.100/24`; temporary `10.10.10.110/24` used only to prove the second ECMP hash member |
+| Kali | `10.10.10.100/24` |
 | Metasploitable | `10.10.10.101/24` |
-| FortiGate `port3` | Alias `TRANSIT-R1`, `10.30.30.1/24` |
+| HQ `port3` | Alias `TRANSIT-R1`, `10.30.30.1/24` |
 | R1 | Gi0/1 `10.30.30.2/24`; Gi0/0 `10.20.20.1/24` |
-| Alpine lower path | eth1 `10.20.20.100/24` |
-| FortiGate `port1` | Alias `R2-Port1`, `10.50.50.1/24`; repurposed from the earlier management uplink |
-| R2 | Gi0/0 `10.50.50.2/24`; Gi0/1 `10.40.40.1/24` |
-| Alpine upper path | eth2 `10.40.40.100/24` |
-| Shared ECMP destination | Alpine loopback `10.60.60.100/32` |
-| Alpine separate upstream | eth0 most recently observed as `192.168.1.36/24`, default via `192.168.1.1`; DHCP state is volatile |
-| FortiGate ECMP routes | `10.60.60.100/32` via R1 `10.30.30.2` and R2 `10.50.50.2`; both distance `10`, metric `0`, priority `1`, weight `0` |
-| FortiGate ECMP algorithm | `source-ip-based` |
-| Alpine ECMP | Equal-weight route to `10.10.10.0/24` through `10.20.20.1/eth1` and `10.40.40.1/eth2` |
-| ECMP proof | `.100` selected port3/R1; temporary `.110` selected port1/R2 |
-| Protected application | Python HTTP service on Alpine loopback `10.60.60.100:80` |
-| Local firewall identity | `lab-local-user` in `LAB-AUTH-USERS` |
-| Identity-aware policy | Policy ID `3`, `auth-lan-to-alpine`; port2 to port1/port3; `KALI-CLIENT` + `LAB-AUTH-USERS` to `ALPINE-LOOPBACK`; `HTTP` and `PING`; NAT disabled |
-| Authentication behavior | HTTP form login creates an IP-to-user mapping; PING can reuse the mapping but cannot prompt |
-| Authentication lifetime | `5` minutes, `idle-timeout` |
-| Monitoring | `diagnose firewall auth list` and GUI Firewall User Monitor correlated |
-| HTTPS portal | Theory only in final state; temporary port 1003 test failed TLS cipher negotiation and was rolled back |
+| Alpine | eth1 `10.20.20.100/24`; eth2 `10.40.40.100/24`; route to HQ LAN via Branch `10.40.40.1` |
+| HQ `port1` | Alias `To-Branch`, `10.50.50.1/24`; IPsec underlay |
+| Branch `port1` | Alias `ToForti`, `10.50.50.2/24`; IPsec underlay |
+| Branch `port2` | Branch LAN gateway `10.40.40.1/24` |
+| Branch `port3` | DHCP/default route for evaluation registration only; outside the protected path |
+| Architecture delta | R2 and the active ECMP/shared-loopback continuation were removed; R1 remains connected but is not the VPN return path |
+| Phase 1 | `HQ-to-Branch` / `Branch-to-HQ`; IKEv1 Main Mode; PSK; `DES-SHA1`; DH14; DPD on-idle; NAT-T off |
+| Phase 2 | `HQ-BR-P2` / `BR-HQ-P2`; ESP tunnel mode; mirrored `/24` selectors; `DES-SHA1`; PFS/DH14; replay enabled |
+| Negotiation behavior | Auto-negotiate and Autokey Keep Alive disabled; interesting traffic establishes the SAs |
+| Protected routes | HQ `10.40.40.0/24` via `HQ-to-Branch`; Branch `10.10.10.0/24` via `Branch-to-HQ` |
+| Firewall policies | Two per FortiGate so either site can initiate; PING/HTTP; logging enabled; NAT and UTM disabled |
+| IPsec validation | First Kali echo lost during negotiation; later Kali-to-Alpine traffic passed; Alpine-to-Kali returned 3/3 |
+| Control-plane proof | `get vpn ipsec tunnel summary` reported `1/1` selector up; Branch GUI reported tunnel `Up` |
+| Troubleshooting | GUI `-61` creation failure recovered through CLI; physical-interface route drafts corrected to VPN-interface routes |
 | Lesson 05 AV controls | `L05-AV-FLOW` and `L05-AV-PROXY`; HTTP block action validated with benign/EICAR controls |
 | AV readiness boundary | AV Engine `7.00054`; base/extended definitions `1.00000` dated 2018; suitable for EICAR only, not current-threat claims |
 | Protocol Options experiment | `L05-PROTO-1MB`; oversized logging/blocking at `1 MB`; deliberately restrictive test object |
 | Archive inspection | benign ZIP allowed; EICAR ZIP blocked |
 | Lesson 06 HTTP controls | `allowed.html` unmatched/allowed; `monitored.html` allowed and logged; `blocked.html` denied by local URL filter |
 | Lesson 06 Web Filter profiles | `L06-WF-FLOW` and `L06-WF-PROXY`; identical Simple Block and Monitor intentions validated sequentially |
-| Latest data-plane validated policy state | Lesson 08: Policy ID `3`; flow-based; `L05-AV-FLOW`; `L06-WF-FLOW`; `L08-IPS-MONITOR`; `L08-APP-MONITOR`; `default` Protocol Options; `no-inspection`; NAT disabled |
+| Latest UTM validation milestone | Lesson 08: AV/Web Filter/IPS/Application Control on the former identity-aware continuation; retained as historical evidence |
 | FortiGuard rating status | `diagnose debug rating` and `get webfilter status` reported Web-filter `Disable`; local URL filtering remains functional |
 | Lesson 07 certificate roles | `Fortinet_CA_SSL` for normal inspection signing; `Fortinet_CA_Untrusted` for preserving origin warnings; `Fortinet_GUI_Server` for management HTTPS |
 | Lesson 07 inspection profiles | `L07-CERT-INSPECTION`, customized `custom-deep-inspection`, and studied `L07-PROTECT-SERVER` context |
@@ -59,32 +56,39 @@ The Lesson 03 dual-routed/ECMP topology and Lesson 04 identity-aware Policy ID `
 | Lesson 08 Application Control | `L08-APP-MONITOR`; all categories Monitor; temporary exact overrides removed; non-default-port blocking and NPE disabled in final state |
 | Application validation | Firefox and BitTorrent identified; BitTorrent detected on TCP/80, then denied by exact override and non-default-port enforcement; Firefox received the HTTP replacement page |
 | IPS health / failure decision | Light-load sample: 100% idle CPU, 53.2% memory; `ipsengine`/`ipshelper` sleeping; global `fail-open disable` |
-| Current management decision | port1 is no longer management; administration continues through port2/LAB-LAN |
+| Current management decision | HQ administration continues through port2/LAB-LAN; `port1` is the VPN underlay |
 | FortiCare / FortiGuard subscriptions | Not included with the free evaluation |
 
-The final FortiGate installed route state is intentionally small:
+The relevant current route state is intentionally small:
 
 ```text
+HQ:
 C 10.10.10.0/24 directly connected, port2
 C 10.30.30.0/24 directly connected, port3
 C 10.50.50.0/24 directly connected, port1
-S 10.60.60.100/32 [10/0] via 10.30.30.2, port3
-                     [10/0] via 10.50.50.2, port1
+S 10.20.20.0/24 via 10.30.30.2, port3
+S 10.40.40.0/24 via HQ-to-Branch
+
+Branch:
+C 10.40.40.0/24 directly connected, port2
+C 10.50.50.0/24 directly connected, port1
+S 10.10.10.0/24 via Branch-to-HQ
+S 0.0.0.0/0 via the port3 DHCP gateway
 ```
 
-The earlier `10.20.20.0/24` and `10.40.40.0/24` FortiGate routes were validated intermediate states. They were repurposed to the common `/32` routes because equal-cost routes to different destination prefixes are not ECMP.
+The protected-subnet routes have no physical next-hop gateway. Their VPN interfaces identify the encrypted path; the Phase 1 `remote-gw` values identify the directly connected IKE peers.
 
 ## Latest validated physical topology
 
-![Latest Lesson 03 dual-path routing topology](lessons/03-routing-static-routes-ecmp/evidence/19-final-dual-path-topology.png)
+```mermaid
+flowchart LR
+    HLAN["HQ LAN<br/>10.10.10.0/24"] --> HQ["HQ FortiGate<br/>10.50.50.1"]
+    HQ == "IKE/ESP<br/>10.50.50.0/24" ==> BR["Branch FortiGate<br/>10.50.50.2"]
+    BR --> ALP["Branch host<br/>10.40.40.100"]
+    HQ --> R1["R1 lower path"] --> ALP
+```
 
-The design deliberately uses two independent routed paths:
-
-- **Lower member:** FortiGate port3 -> R1 -> Alpine eth1
-- **Upper member:** FortiGate port1 -> R2 -> Alpine eth2
-- **Common target:** Alpine `lo` -> `10.60.60.100/32`
-
-The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.40.100` are different destinations, so routes to them cannot demonstrate FortiGate ECMP. The loopback gives both routers one identical destination prefix while remaining independent of either physical link address.
+The IPsec test is deterministic: Alpine routes HQ LAN through Branch, while R1 remains available as inherited routing context. Lesson 03 preserves the earlier ECMP topology and proof as its own historical stage.
 
 ## Lessons
 
@@ -99,7 +103,8 @@ The loopback is essential to the ECMP test. Alpine's `10.20.20.100` and `10.40.4
 | [06 - Web Filtering](lessons/06-web-filtering/README.md) | Complete | Unmatched allow plus explicit local Monitor/Block behavior, flow/proxy profiles, replacement page, exact-match troubleshooting, and Web Filter log proof; FortiGuard categories and HTTPS inspection retained as theory |
 | [07 - SSL and Certificate Inspection](lessons/07-ssl-certificate-inspection/README.md) | Complete (configuration-led) | Certificate roles and stores, certificate/deep inspection comparison, validation actions, exemptions, modern TLS compatibility, CA export, and policy attachment; no decryption claim under the low-encryption evaluation |
 | [08 - Intrusion Prevention and Application Control](lessons/08-ips-application-control/README.md) | Complete | EICAR Monitor/Block/exemption controls, packet-log correlation, Firefox/BitTorrent identification, exact overrides, replacement behavior, port/protocol correlation, and IPS health/fail-open analysis |
-| 09+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
+| [09 - Route-Based Site-to-Site IPsec VPN](lessons/09-site-to-site-ipsec-vpn/README.md) | Complete | Two-FortiGate IKEv1/ESP tunnel, mirrored selectors, VPN-interface routing, directional policies, on-demand SA establishment, and bidirectional proof |
+| 10+ | Planned | Added one level at a time as the FortiOS 7.6 Administrator course progresses |
 
 The repository root describes the currently integrated project. Each lesson preserves the detailed implementation and its validated historical stages.
 
@@ -158,15 +163,25 @@ The repository root describes the currently integrated project. Each lesson pres
     │   └── evidence/
     │       ├── README.md
     │       └── 12 curated certificate, SSL-profile, exemption, policy, and CA-export artifacts
-    └── 08-ips-application-control/
+    ├── 08-ips-application-control/
+    │   ├── README.md
+    │   ├── lab-files/
+    │   │   ├── README.md
+    │   │   ├── baseline.html
+    │   │   └── bittorrent-responder.py
+    │   └── evidence/
+    │       ├── README.md
+    │       └── 23 curated IPS, Application Control, client, log, and health artifacts
+    └── 09-site-to-site-ipsec-vpn/
         ├── README.md
-        ├── lab-files/
+        ├── configs/
         │   ├── README.md
-        │   ├── baseline.html
-        │   └── bittorrent-responder.py
+        │   ├── hq-fortigate.conf
+        │   ├── branch-fortigate.conf
+        │   └── supporting-routing.txt
         └── evidence/
             ├── README.md
-            └── 23 curated IPS, Application Control, client, log, and health artifacts
+            └── 7 curated routing, negotiation, traffic, status, and troubleshooting artifacts
 ```
 
 ## Project methodology
@@ -246,6 +261,17 @@ Lesson 08 adds intrusion- and application-inspection rules:
 - Application identity, non-default-port use, and protocol/service conformance are related but distinct checks.
 - Old application/IPS databases support deterministic controls only, not current production coverage.
 - IPS performance and fail-open conclusions remain bounded to observed load and configuration.
+
+Lesson 09 adds route-based IPsec rules:
+
+- Underlay peer reachability is proved before IKE is introduced.
+- The route chooses a VPN virtual interface; the Phase 1 `remote-gw` identifies the peer.
+- Phase 1 protects IKE negotiation, while Phase 2 creates the ESP data-plane SAs and selectors.
+- A bidirectional IKE SA and two unidirectional IPsec SAs are different objects.
+- Firewall policy, route lookup, and Phase 2 selector matching are separate gates.
+- Stateful replies do not replace the reverse policy required when the other site initiates a new session.
+- Auto-negotiate/keepalive behavior is proved through the first-packet loss and later success.
+- Low-encryption `DES-SHA1` is documented as an evaluation limitation, not a production recommendation.
 
 ## Evidence standard
 
@@ -327,6 +353,17 @@ exact override/non-default-port -> BitTorrent denied
 health -> light-load baseline plus fail-open disable configuration
 ```
 
+```text
+Route-based IPsec proof
+before VPN -> Kali receives Destination Net Unreachable for Branch LAN
+route configuration -> protected subnet points to the named VPN interface
+before traffic -> VPN route is known but inactive
+first interesting packet -> starts IKE/Phase 2; first echo is lost
+later traffic -> Kali reaches Alpine
+control plane -> selector total/up is 1/1; GUI tunnel is Up
+reverse initiation -> Alpine reaches Kali through the explicit reverse policies
+```
+
 ## Evaluation-license constraint
 
 The permanent evaluation license used in this lab is intentionally restricted. The FortiGate reported:
@@ -339,7 +376,7 @@ The permanent evaluation license used in this lab is intentionally restricted. T
 - No FortiCare support
 - No FortiGuard support
 
-These limits directly shaped Lessons 03-08. Port1 was repurposed from its earlier management role to become the R2 transit interface. The two intermediate remote-network routes were later replaced by two routes to the common `/32`. Lesson 03 temporarily used a broad combined policy to cover the ECMP interface combinations. Lesson 04 repurposed Policy ID `3` as the narrower `auth-lan-to-alpine` rule instead of creating a fourth policy. Lesson 05 attached AV profiles to that same policy and recorded the old/unsubscribed signature state. Lesson 06 reused Policy ID `3` again, attached Web Filter profiles sequentially, and used local URL filtering rather than claiming unavailable FortiGuard category enforcement. Lesson 07 again reused Policy ID `3`, but stopped at SSL configuration proof because low-encryption operation and the missing managed-PKI path made a meaningful deep-inspection validation unavailable. Lesson 08 reused Policy ID `3` for IPS and Application Control, used fixed local signatures instead of subscription-dependent claims, and recorded the light-load performance boundary.
+These limits directly shaped Lessons 03-09. Port1 was first repurposed for the R2/ECMP experiment, then retained as the HQ-to-Branch IPsec underlay. Lesson 09 replaced R2 with a separately licensed Branch FortiGate, removed the live shared-loopback ECMP continuation, reused HQ Policy ID `3`, and kept each FortiGate within its own policy/route/interface ceiling. The low-encryption limit forced `DES-SHA1`; the documentation explicitly rejects that proposal for production use.
 
 ## Historical Lesson 02 publication objects
 
@@ -368,6 +405,9 @@ They were not revalidated after port3 changed from the directly connected `10.20
 - `L08-IPS-MONITOR` is a sequentially reused object: its final EICAR action is Block despite the descriptive name.
 - The temporary IPS exemption, exact Application Control overrides, and non-default-port block were removed after validation.
 - Normal Lesson 08 continuation keeps `L08-APP-MONITOR` category actions on Monitor, NPE off, and IPS `fail-open disable`.
+- Lesson 09 replaces the current ECMP continuation with deterministic Branch routing; Lesson 03 still preserves the complete ECMP implementation as historical evidence.
+- Both IPsec peers must receive the same replacement PSK if the sanitized configuration files are reapplied.
+- Branch port3/default routing exists for evaluation registration only and must not be used as the protected-subnet path.
 - Cisco running configurations require `copy running-config startup-config` if restart persistence is desired.
 - A production continuation should retain directional, explicit, least-privilege policies and a trusted HTTPS authentication portal.
 
