@@ -1,0 +1,37 @@
+Lesson 10 - targeted verification reference
+Run each section on the named device. This file contains commands, not results.
+Recorded observations are indexed separately in ../evidence/README.md.
+
+ALPINE - endpoint and neighboring gateways
+ip addr show
+ip route show
+ping -c 3 10.20.20.1
+ping -c 3 10.40.40.1
+ping -c 3 10.60.60.100
+
+R1 - host route delivery (privileged EXEC mode)
+ping 10.60.60.100
+
+HQ FORTIGATE - route candidates and member configuration
+get router info routing-table details 10.60.60.100
+get router info routing-table details 10.40.40.0
+show system sdwan
+get vpn ipsec tunnel summary
+
+KALI - run a fresh test for each manual member preference
+ping -c 5 10.60.60.100
+
+HQ FORTIGATE - observe the test from another console
+diagnose sniffer packet any 'host 10.60.60.100 and icmp' 4 0
+
+Use Ctrl+C to stop the sniffer. Verbosity 4 includes interface names.
+Capture while the Kali test runs; one echo appears at several interfaces.
+
+For the un-NATed overlay test, the original narrower filter was:
+diagnose sniffer packet any 'host 10.10.10.100 and host 10.60.60.100 and icmp' 4 0 1
+
+That narrower filter excludes the translated port3 leg of the routed test.
+
+HQ GUI - active measurements
+Network > SD-WAN > Performance SLAs > ALPINELOOPBACKSLA
+Read the member name alongside its latency, packet loss, and jitter.

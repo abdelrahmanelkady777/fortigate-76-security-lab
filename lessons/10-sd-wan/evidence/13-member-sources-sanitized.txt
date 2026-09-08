@@ -1,0 +1,43 @@
+Sanitized transcriptions of separate HQ configuration checkpoints.
+Device prompts omitted. The first excerpt stops after the member definitions;
+the second shows the later probe-source configuration, not traffic output.
+
+Source screenshot: 1a29fdfa-6e65-40d0-ad42-c2c4bf94dd66.png
+Command: show system sdwan
+
+config system sdwan
+    set status enable
+    config zone
+        edit "virtual-wan-link"
+        next
+        edit "UNDERLAY"
+        next
+        edit "OVERLAY"
+        next
+    end
+    config members
+        edit 1
+            set interface "port3"
+            set zone "UNDERLAY"
+            set gateway 10.30.30.2
+        next
+        edit 2
+            set interface "HQ-to-Branch"
+            set zone "OVERLAY"
+        next
+    end
+[excerpt ends; subsequent configuration omitted]
+
+Source screenshot: 36eb3ef3-d728-4fed-96fb-420afb779909.png
+Commands entered:
+
+config system sdwan
+    config members
+        edit 1
+            set source 10.30.30.1
+        next
+        edit 2
+            set source 10.10.10.1
+        next
+    end
+end
