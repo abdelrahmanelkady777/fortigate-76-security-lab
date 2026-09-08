@@ -1,0 +1,30 @@
+Lesson 10 - supporting router and endpoint configuration
+Focused runtime reference; interface names match this EVE-NG topology.
+These are separate device-console sections, not one shell script.
+
+ALPINE (root console)
+---------------------
+ip link set eth1 up
+ip link set eth2 up
+ip link set lo up
+ip addr replace 10.20.20.100/24 dev eth1
+ip addr replace 10.40.40.100/24 dev eth2
+ip addr replace 10.60.60.100/32 dev lo
+ip route replace 10.10.10.0/24 via 10.40.40.1 dev eth2
+ip route replace 10.30.30.0/24 via 10.20.20.1 dev eth1
+
+The HQ-LAN return route uses Branch; the translated port3 source returns via R1.
+Leave eth0 and the separate management/default route untouched.
+The loopback is a local endpoint address, not a subnet behind another router.
+
+R1 (Cisco privileged console)
+-----------------------------
+configure terminal
+ip route 10.60.60.100 255.255.255.255 10.20.20.100
+end
+
+Existing R1 addressing:
+Gi0/1 10.30.30.2/24 toward HQ port3
+Gi0/0 10.20.20.1/24 toward Alpine eth1
+
+Retain R1's existing HQ-LAN route via 10.30.30.1.

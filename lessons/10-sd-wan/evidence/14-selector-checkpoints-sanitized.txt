@@ -1,0 +1,46 @@
+Sanitized, abridged transcriptions of IPsec configuration checkpoints.
+These are separate console excerpts, not a consolidated appliance export.
+Serial-derived prompts, blank lines, and an incomplete command were omitted.
+Completed setting values are retained; no new settings were inserted.
+
+HQ additional selector
+Source screenshot: c8ec8fe9-a28c-4125-aa75-42baf4c8eb30.png
+Context: HQ-BR-LO-P2
+
+set phase1name "HQ-to-Branch"
+set proposal des-sha1
+set encapsulation tunnel-mode
+set pfs enable
+set dhgrp 14
+set replay enable
+set auto-negotiate disable
+set keylifeseconds 43200
+set keepalive disable
+set src-subnet 10.10.10.0 255.255.255.0
+set dst-subnet 10.60.60.100 255.255.255.255
+
+Branch additional selector
+Source screenshot: 059baa1b-683d-4aa0-af86-a78034c61f46.png
+Context: BR-HQ-LO-P2
+
+set phase1name "Branch-to-HQ"
+set proposal des-sha1
+set encapsulation tunnel-mode
+set pfs enable
+set dhgrp 14
+set replay enable
+set keylifeseconds 43200
+set auto-negotiate disable
+set keepalive disable
+set src-subnet 10.60.60.100 255.255.255.255
+set dst-subnet 10.10.10.0 255.255.255.0
+
+Separate selector-count checkpoint
+Source screenshot: c5340033-5b0d-4517-ae3e-506ae06c2473.png
+Command: get vpn ipsec tunnel summary
+Selected fields from the result:
+'HQ-to-Branch' 10.50.50.2:0 selectors(total,up): 2/1
+
+This checkpoint records two configured selectors and one up. It does not
+identify which protected subnet's SA is active; packet captures provide
+the loopback-path evidence separately.

@@ -1,0 +1,19 @@
+Sanitized, abridged transcription of the recorded HQ overlay capture.
+Source screenshot: 9bbea759-c8ef-40b5-84a1-fe228f5030a0.png
+Device prompt omitted. First two echo requests and the first observed reply
+are retained, with their original displayed timestamps and packet fields.
+
+diagnose sniffer packet any 'host 10.10.10.100 and host 10.60.60.100 and icmp' 4 0 1
+Using Original Sniffing Mode
+interfaces=[any]
+filters=[host 10.10.10.100 and host 10.60.60.100 and icmp]
+15.069931 port2 in 10.10.10.100 -> 10.60.60.100: icmp: echo request
+15.070301 HQ-to-Branch out 10.10.10.100 -> 10.60.60.100: icmp: echo request
+16.097594 port2 in 10.10.10.100 -> 10.60.60.100: icmp: echo request
+16.097618 HQ-to-Branch out 10.10.10.100 -> 10.60.60.100: icmp: echo request
+16.100718 HQ-to-Branch in 10.60.60.100 -> 10.10.10.100: icmp: echo reply
+16.100743 port2 out 10.60.60.100 -> 10.10.10.100: icmp: echo reply
+
+The remaining displayed requests also have replies. The paired client
+screenshot reports five transmitted, four received, and sequences 2-5.
+These are inner ICMP observations on the virtual tunnel, not an outer ESP capture.

@@ -1,0 +1,26 @@
+Sanitized, abridged transcriptions of two recorded HQ captures.
+Device prompts and timestamps omitted. Addresses/interfaces are unchanged.
+
+NARROW FILTER
+Source screenshot: 3e2a46a2-b4ba-46cc-bc31-2601879b6add.png
+
+diagnose sniffer packet any 'host 10.10.10.100 and host 10.60.60.100 and icmp' 4 0 1
+
+port2 in 10.10.10.100 -> 10.60.60.100: icmp: echo request
+port2 out 10.60.60.100 -> 10.10.10.100: icmp: echo reply
+
+The screenshot repeats this request/reply pair for all five echoes.
+The filter excludes packets whose original client address has been translated.
+
+BROADENED FILTER
+Source screenshot: 2d249b5d-6f35-41ca-98dd-8d7071dc6985.png
+
+diagnose sniffer packet any 'host 10.60.60.100 and icmp' 4 0
+
+port2 in 10.10.10.100 -> 10.60.60.100: icmp: echo request
+port3 out 10.30.30.1 -> 10.60.60.100: icmp: echo request
+port3 in 10.60.60.100 -> 10.30.30.1: icmp: echo reply
+port2 out 10.60.60.100 -> 10.10.10.100: icmp: echo reply
+
+The screenshot contains five complete four-line cycles. The unchanged
+destination filter exposes SNAT on egress and reverse translation on return.

@@ -1,368 +1,45 @@
-# Repository Structure
-
-## Root-versus-lesson mapping
-
-The repository root is **not a lesson**. It represents the entire FortiGate project and evolves as new lessons are completed.
-
-```text
-fortigate-76-security-lab/                 <- whole project
-├── README.md                              <- overall project state
-├── CHANGELOG.md
-├── REPOSITORY_STRUCTURE.md
-└── lessons/
-    ├── 00-environment-setup/              <- Lesson 00
-    ├── 01-system-network-admin-access/    <- Lesson 01
-    ├── 02-firewall-policies-nat/          <- Lesson 02
-    ├── 03-routing-static-routes-ecmp/      <- Lesson 03
-    ├── 04-firewall-authentication/        <- Lesson 04
-    ├── 05-antivirus-inspection/            <- Lesson 05
-    ├── 06-web-filtering/                    <- Lesson 06
-    ├── 07-ssl-certificate-inspection/       <- Lesson 07
-    ├── 08-ips-application-control/          <- Lesson 08
-    ├── 09-site-to-site-ipsec-vpn/           <- Lesson 09
-    ├── 10-<next-course-lab>/               <- future
-    └── _template/
-```
-
-This mirrors the organization used by the FortiWeb project: the root summarizes the integrated project, while each lesson contains its own detailed implementation and evidence.
-
-## Current realized structure
-
-```text
-.
-├── README.md
-├── CHANGELOG.md
-├── REPOSITORY_STRUCTURE.md
-├── UPLOAD_MANIFEST.md
-├── .gitignore
-└── lessons/
-    ├── _template/
-    │   └── README.md
-    ├── 00-environment-setup/
-    │   ├── README.md
-    │   └── evidence/
-    │       └── README.md
-    ├── 01-system-network-admin-access/
-    │   ├── README.md
-    │   └── evidence/
-    │       ├── README.md
-    │       └── curated proof artifacts
-    ├── 02-firewall-policies-nat/
-    │   ├── README.md
-    │   └── evidence/
-    │       ├── README.md
-    │       └── curated policy/NAT/VIP proof artifacts
-    ├── 03-routing-static-routes-ecmp/
-    │   ├── README.md
-    │   └── evidence/
-    │       ├── README.md
-    │       ├── 19-final-dual-path-topology.png
-    │       └── curated routing/policy/ECMP proof artifacts
-    ├── 04-firewall-authentication/
-    │   ├── README.md
-    │   └── evidence/
-    │       ├── README.md
-    │       └── 15 curated authentication proof artifacts
-    ├── 05-antivirus-inspection/
-    │   ├── README.md
-    │   ├── lab-files/
-    │   │   ├── README.md
-    │   │   └── benign.txt
-    │   └── evidence/
-    │       ├── README.md
-    │       └── 20 curated AV/inspection proof artifacts
-    ├── 06-web-filtering/
-    │   ├── README.md
-    │   ├── lab-files/
-    │   │   ├── README.md
-    │   │   ├── allowed.html
-    │   │   ├── blocked.html
-    │   │   └── monitored.html
-    │   └── evidence/
-    │       ├── README.md
-    │       └── 14 curated Web Filter proof artifacts
-    ├── 07-ssl-certificate-inspection/
-    │   ├── README.md
-    │   └── evidence/
-    │       ├── README.md
-    │       └── 12 curated certificate/SSL configuration artifacts
-    ├── 08-ips-application-control/
-    │   ├── README.md
-    │   ├── lab-files/
-    │   │   ├── README.md
-    │   │   ├── baseline.html
-    │   │   └── bittorrent-responder.py
-    │   └── evidence/
-    │       ├── README.md
-    │       └── 23 curated IPS/Application Control proof artifacts
-    └── 09-site-to-site-ipsec-vpn/
-        ├── README.md
-        ├── configs/
-        │   ├── README.md
-        │   ├── hq-fortigate.conf
-        │   ├── branch-fortigate.conf
-        │   └── supporting-routing.txt
-        └── evidence/
-            ├── README.md
-            └── 7 curated routing/IPsec/traffic proof artifacts
-```
-
-## Ownership rules
-
-### Root `README.md`
-
-The root README describes:
-
-- the purpose of the full project
-- the currently validated integrated architecture
-- the list/status of completed lessons
-- the project methodology
-- the evidence standard
-- the evaluation-license constraints
-
-It stays concise compared with individual lesson documents.
-
-### `lessons/NN-<name>/README.md`
-
-Each lesson owns the detailed narrative for one implemented stage:
-
-1. scope
-2. starting state
-3. architecture delta
-4. exact configuration
-5. verification plan and observed results, or an explicit unperformed boundary
-6. FortiGate diagnostics/control-plane state
-7. troubleshooting and operational decisions
-8. final validated or configuration-only result
-9. cleanup/rollback
-10. lessons learned
-11. evidence
-
-Lesson 02 expands this model with packet-capture evidence because NAT claims are strongest when the receiving endpoint proves the translated address it actually observed.
-
-Lesson 03 expands it again by preserving sequential architecture states. The lesson distinguishes:
-
-- the first routed path through R1
-- the second routed path through R2
-- Alpine's equal-cost return routing
-- the correction from two different remote prefixes to one shared loopback destination
-- FortiGate ECMP installation and per-source member selection
-- negative results caused by interface state, missing policy, unsaved GUI state, and policy-interface mismatch
-
-The detailed lesson must make clear which routes and policies were intermediate and which remained in the final state.
-
-Lesson 04 returns to a deliberately compact narrative. It distinguishes:
-
-- local active authentication that was implemented and validated
-- LDAP, RADIUS, passive authentication, 2FA/FortiToken, and production HTTPS portal design that remain theory only
-- the inherited broad policy that initially bypassed authentication
-- the final identity-aware Policy ID `3`
-- pre-authentication denial, post-authentication access, idle timeout, and user monitoring
-- the temporary HTTPS attempt that failed TLS cipher negotiation and was fully rolled back
-
-The lesson should explain the identity and policy reasoning without duplicating the full Lesson 03 routing build.
-
-Lesson 05 continues the compact form. It distinguishes:
-
-- policy inspection architecture (`flow-based` or `proxy-based`) from AV file handling (`stream` or proxy-only `legacy`)
-- firewall-policy acceptance from a later antivirus/UTM denial
-- harmless negative controls from the known-detectable EICAR positive control
-- default file handling from the deliberately restrictive `L05-PROTO-1MB` experiment
-- an oversized-file event from a malware verdict
-- benign ZIP handling from detection inside an EICAR ZIP
-- implemented local AV behavior from unavailable/current cloud-assisted FortiGuard and FortiSandbox services
-
-The lesson reuses the authenticated Policy ID `3` and existing Alpine HTTP service instead of rebuilding routing or identity controls.
-
-Lesson 06 continues the compact form. It distinguishes:
-
-- policy authorization from a later Web Filter/UTM decision
-- an unmatched allowed URL from explicit Monitor and Block entries
-- flow and proxy feature-set profiles with identical local URL-filter intentions
-- local static URL filtering from unavailable FortiGuard category rating
-- static URL actions implemented in the lab from FortiGuard category actions retained as theory
-- a `Simple` exact-match typo from a policy/profile attachment failure
-- certificate inspection from deep inspection and the resulting HTTPS visibility boundary
-- the observed disabled rating-service status from successful local URL filtering
-
-The lesson reuses Policy ID `3`, `L05-AV-FLOW`/`L05-AV-PROXY`, the Alpine loopback HTTP service, and the existing identity mapping. It adds Web Filter profiles and three harmless reproducible HTML controls without consuming another policy.
-
-Lesson 07 remains compact but changes the evidence model. It distinguishes:
-
-- certificate inspection from full SSL/deep inspection
-- handshake/certificate visibility from decrypted payload visibility
-- outbound multiple-client inspection from inbound protected-server inspection
-- `Fortinet_CA_SSL`, `Fortinet_CA_Untrusted`, and `Fortinet_GUI_Server` warning contexts
-- public CA distribution from protected private-key possession
-- definite certificate validation failure from validation timeout
-- privacy/compatibility exemptions from ordinary allowed inspection
-- HSTS from certificate pinning and mutual TLS
-- TLS/TCP from QUIC/HTTP/3, DNS over QUIC, and ECH
-- configuration proof from data-plane, endpoint-trust, and SSL-log proof
-
-The lesson reuses Policy ID `3` and the flow AV/Web Filter continuation. It adds SSL/SSH profiles and a policy attachment without claiming successful HTTPS interception under the low-encryption evaluation. The appliance-specific exported CA file and all private-key material remain outside the repository.
-
-Lesson 08 returns to full three-layer traffic validation. It distinguishes:
-
-- firewall-policy authorization from later IPS/Application Control decisions
-- Monitor observation from Block enforcement using the same EICAR signature
-- descriptive sensor names from the entry action FortiGate actually enforces
-- request direction from the response direction in which a signature matches
-- service/port selection from payload-based application identity
-- category Monitor from exact application Block overrides
-- HTTP replacement behavior from non-HTTP payloads carried on TCP/80
-- non-default-port enforcement from Network Protocol Enforcement intent
-- deterministic old-signature controls from current production coverage
-- light-load process evidence from a capacity claim
-
-The lesson reuses Policy ID `3`, records temporary sequential states honestly, removes exemptions and overrides after testing, and includes only harmless reproducible controls. The raw EICAR file remains outside the repository.
-
-Lesson 09 changes the integrated topology and distinguishes:
-
-- peer underlay reachability from protected-subnet reachability
-- physical peer interfaces from route-based IPsec virtual interfaces
-- the Phase 1 IKE SA from the two directional Phase 2 IPsec SAs
-- Phase 1 proposals protecting negotiation from Phase 2 proposals protecting user data
-- route lookup, firewall-policy matching, selector matching, and ESP processing
-- stateful return traffic from a new session initiated by the opposite site
-- traffic-triggered SA establishment from proactive Auto-negotiate/keepalive behavior
-- laboratory `DES-SHA1` compatibility from a production cryptographic recommendation
-
-The lesson retires the active ECMP continuation without rewriting Lesson 03 history, records all changed FortiGate/R1/Alpine routing, and keeps full configurations sanitized. It uses client behavior, tunnel diagnostics, and GUI status as independent proof layers.
-
-### `lessons/NN-<name>/evidence/`
-
-Contains only sanitized screenshots or small supporting artifacts directly associated with that level.
-
-Do not use this directory as a dump of every screenshot taken while studying.
-
-### `lessons/_template/README.md`
-
-Template for future lessons. Copy it only when a new lesson is actually started.
-
-## Project methodology
-
-The Fortinet course is used as the curriculum, not as a sequence of GUI screenshots to reproduce.
-
-A topic is implemented only when it adds meaningful lab behavior. Theory can remain theory.
-
-The topology is cumulative wherever practical, and every experiment should preserve a known-good recovery path.
-
-Lessons 02-09 reinforce several methodology rules:
-
-- established management infrastructure is preserved until a later design intentionally repurposes it and records the new access path
-- negative tests should change one match condition at a time
-- logs and packet captures are preferred over GUI-only claims
-- equivalent objects can share one policy when the security intent is genuinely identical
-- a course example does not require a duplicate lab if the same mechanism has already been proven more meaningfully
-- interface state and same-subnet adjacency are validated before remote routing
-- forward routing and return routing are configured explicitly
-- a FortiGate-originated ping is not treated as proof of client transit authorization
-- ECMP requires equal eligible routes to the same destination prefix
-- packet direction is interpreted literally: an ingress line is not outbound-member proof
-- sequential reuse under an evaluation limit is documented rather than hidden
-- authentication and authorization are kept distinct
-- the protected application is validated before enforcing an identity condition
-- source address and user/group are documented as simultaneous policy matches
-- theory-only identity systems are labeled explicitly instead of being simulated without meaningful validation
-- AV is tested with both a negative control and a deterministic positive control
-- flow/proxy behavior is compared without incorrectly equating proxy inspection with legacy full-file AV
-- Protocol Options limits are documented as inspection/resource boundaries
-- signature age and subscription limitations remain visible in the conclusion
-- Web Filtering is tested with unmatched allow, explicit Monitor, and explicit Block controls
-- local static URL behavior is kept separate from FortiGuard category behavior
-- feature-set compatibility is preserved when switching flow/proxy profiles sequentially
-- exact URL-table state is checked before blaming policy, routing, or licensing
-- disabled rating services and theory-only HTTPS inspection remain visible in the conclusion
-- certificate inspection is not described as partial payload decryption
-- endpoint trust, TLS interception, and security-profile inspection are separate claims
-- warning certificates are documented by role instead of treated as interchangeable
-- exemptions are documented as deliberate reductions in payload visibility
-- application and transport compatibility includes pinning, HSTS, mutual TLS, QUIC, and ECH
-- a configuration-only lesson explicitly marks data-plane and log evidence as unavailable
-- policy acceptance is kept separate from IPS and Application Control verdicts
-- Monitor-before-Block provides a controlled inspection baseline
-- signature exemptions follow the packet direction at match time
-- application identity is not inferred from a TCP service or port alone
-- exact application overrides are distinguished from category actions
-- protocol/service mismatch theory is tied to an observed payload experiment without inventing an unperformed verdict
-- security-database age and observed workload bound threat-coverage and performance claims
-- an IPsec underlay is validated before protected-subnet routes and policies are added
-- route-based protected-subnet routes select the VPN interface, not the physical peer next hop
-- IKE and IPsec SAs are diagnosed separately from routing and firewall policy
-- both initiation directions are explicit even though return traffic is statefully permitted
-- a lost first packet can be valid evidence of on-demand SA establishment when correlated with later tunnel state
-
-## Evidence rule
-
-A screenshot of a configured GUI object is not sufficient evidence by itself.
-
-Where applicable, use three layers of proof:
-
-1. **Configuration proof** - the intended FortiGate object exists.
-2. **Data-plane/client proof** - traffic or endpoint behavior matches the intended state.
-3. **Control-plane/security proof** - FortiGate routing, sessions, authentication, logs, or diagnostics identify why.
-
-Negative/failure/security testing should be included when it materially strengthens the claim.
-
-For NAT, packet capture at the receiving host is preferred because it proves which translated address reached the destination.
-
-For ECMP, a FortiGate sniffer trace must identify the request's actual egress interface. Lesson 03 therefore distinguishes `port1 in` return traffic from the `port1 out` request that proves FortiGate selected the R2 member.
-
-For firewall authentication, evidence should show the negative pre-authentication state, successful portal login, protected-resource access, the CLI/GUI user mapping, and timeout behavior. A login-page screenshot alone is not sufficient.
-
-For antivirus, evidence should show the profile/policy state, the benign and EICAR client outcomes, and a FortiGate security event that explains the verdict. Forward Traffic evidence should retain the authenticated identity and selected ECMP path. Large-file and archive claims require paired baselines so a size or file-extension assumption cannot replace content-aware proof.
-
-For Web Filtering, evidence should show the profile/policy attachment, the allowed/monitored/blocked client outcomes, and Web Filter events that identify the exact URL, profile, table index, and action source. A replacement page alone does not prove the intended profile matched. Exact-match troubleshooting should preserve both the incorrect URL-table state and the corrected result.
-
-For Lesson 07, GUI evidence proves certificate inventory, profile fields, exemptions, policy attachment, and public-CA export only. It does not prove endpoint trust, successful TLS interception, decrypted payload visibility, HTTPS AV/Web Filter enforcement, QUIC/ECH fallback, or protected-server operation. The missing layers are recorded as an evaluation/PKI boundary rather than filled with inferred behavior.
-
-For Lesson 08, evidence should pair benign and known-signature controls, then correlate Monitor/Block client outcomes with IPS or Application Control events. Exemption evidence must retain both the unsuccessful request-direction assumption and the corrected response direction. Port/protocol claims must preserve the service (`HTTP`) and the detected payload application (`BitTorrent`) in the same experiment. A replacement page alone is insufficient without the application event or configured override.
-
-For Lesson 09, evidence should show a pre-VPN negative control, final VPN-interface routes, on-demand client behavior, Phase 2 selector status, reverse-direction traffic, and independent GUI tunnel state. Sanitized text configurations replace screenshots that expose PSK material. A green tunnel icon alone is insufficient without endpoint and selector evidence.
-
-## Evaluation-license design rule
-
-The permanent evaluation is restricted to three interfaces, firewall policies, and routes.
-
-Future lessons may therefore:
-
-- reuse existing objects
-- reset a completed scenario before building another
-- use separate EVE lab files
-- temporarily replace a policy or route for a specific experiment
-- combine address objects in one policy when the traffic has genuinely identical security intent
-
-The repository must state when a configuration was reset or reused instead of implying that every temporary state coexisted simultaneously.
-
-Lesson 03 applies this rule directly:
-
-- port1 was repurposed from management/upstream connectivity to the R2 transit link
-- management continued through port2/LAB-LAN
-- intermediate routes to `10.20.20.0/24` and `10.40.40.0/24` were replaced by two routes to `10.60.60.100/32`
-- one broad combined policy covered possible ECMP directions within the three-policy ceiling
-- that broad policy is explicitly a constrained lab design, not a production recommendation
-
-Lesson 04 reuses Policy ID `3` as `auth-lan-to-alpine`. Both ECMP egress interfaces remain in the rule, but source, authenticated group, destination, and service are narrowed to the lesson's security intent.
-
-Lesson 05 continues to reuse Policy ID `3` and changes only its inspection/security-profile state between tests. `L05-PROTO-1MB` is an intentionally restrictive experiment and should not remain attached for ordinary continuation unless one-MiB blocking is explicitly required.
-
-Lesson 06 also reuses Policy ID `3`. `L06-WF-FLOW` and `L06-WF-PROXY` are attached sequentially with the matching AV feature set. The final continuation design returns to flow inspection with `default` Protocol Options, `L05-AV-FLOW`, and `L06-WF-FLOW`. FortiGuard category features are not represented as deployed under the unlicensed evaluation.
-
-Lesson 07 again reuses Policy ID `3` for SSL-profile attachment. The low-encryption license and missing managed-PKI path prevent a meaningful end-to-end deep-inspection claim, so the lesson retains configuration evidence and recommends `no-inspection` for ordinary encrypted traffic on this evaluation VM. `Fortinet_CA_SSL.cer` is not committed or installed into Kali, and `Fortinet_CA_Untrusted` must never be distributed as a trusted root.
-
-Lesson 08 reuses Policy ID `3` again for `L08-IPS-MONITOR` and `L08-APP-MONITOR`. It uses exact local EICAR and BitTorrent controls because current FortiGuard subscriptions are unavailable. The IPS exemption, exact application overrides, and non-default-port setting are sequential test states, not simultaneous final controls. The final profile returns all application categories to Monitor and retains `fail-open disable`.
-
-Lesson 09 gives each FortiGate its own three-interface/three-policy/three-route budget. HQ reuses Policy ID `3` for one VPN direction and adds one reverse policy; Branch uses two policies. The old shared-loopback routes are removed, protected routes point to VPN interfaces, and Branch port3 is reserved for evaluation registration. The low-encryption restriction is why the demonstrated peers use `DES-SHA1`; the repository never recommends that proposal for production.
-
-## Sanitization rule
-
-Never commit:
-
-- FortiCare/FortiCloud passwords
-- FortiGate administrator passwords
-- raw VM license artifacts
-- private keys
-- unredacted secrets/tokens
-- unsanitized appliance backup files
-- screenshots containing reusable passwords
+# Repository guide
+
+[Back to the project](README.md)
+
+## Where to start
+
+| Reader goal | Start here |
+| --- | --- |
+| Understand the project quickly | [Root overview and lesson index](README.md) |
+| Follow the final integrated network | [Lesson 10 — SD-WAN](lessons/10-sd-wan/README.md) |
+| Understand the VPN beneath SD-WAN | [Lesson 09 — IPsec](lessons/09-site-to-site-ipsec-vpn/README.md) |
+| Reproduce the foundations in order | [Lesson 00 — Environment](lessons/00-environment-setup/README.md), then the numbered lessons |
+| Inspect proof without reading every step | Each lesson's `evidence/README.md` |
+| Review the latest upload | [Update manifest](UPLOAD_MANIFEST.md) |
+
+## File responsibilities
+
+| Path | Responsibility |
+| --- | --- |
+| `README.md` | Project purpose, final topology, lesson navigation, and safety context |
+| `CHANGELOG.md` | Short dated milestone history |
+| `REPOSITORY_STRUCTURE.md` | This reading and maintenance guide |
+| `UPLOAD_MANIFEST.md` | Exact scope of the latest repository update |
+| `lessons/00-…` through `lessons/10-sd-wan/` | Numbered, self-contained learning checkpoints |
+| `lessons/_template/README.md` | Reusable lesson-writing structure |
+| A lesson's `README.md` | Why the change was made, what was configured, how it works, and what the evidence shows |
+| A lesson's `evidence/` | Curated original screenshots or explicitly labeled sanitized transcripts, with an index |
+| A lesson's `configs/` | Focused configuration references and application notes, where applicable |
+| A lesson's `lab-files/` | Small supporting test assets, where applicable |
+
+## Reading historical configurations
+
+The lessons preserve their own checkpoints. For example, Lesson 03 documents ECMP, Lesson 09 documents the two-FortiGate VPN, and Lesson 10 reuses that VPN alongside R1 under SD-WAN. Read a configuration with its lesson's topology and prerequisites; do not combine unrelated checkpoints into one appliance configuration.
+
+The root stays short. Detailed address plans, commands, tests, and explanations belong in the relevant lesson rather than being repeated in several root files.
+
+## Evidence conventions
+
+- Number evidence in the order it supports the explanation; use descriptive filenames.
+- Connect each artifact to a specific configuration or observation.
+- Distinguish a settings screenshot from a measured traffic result.
+- Label transcribed excerpts and remove identifiers without changing packet addresses, interfaces, or outcomes.
+- Keep secrets, private keys, license material, full backups, and copyrighted course slides out of the repository.
+
+Lesson 10 follows the same pattern with [a configuration guide](lessons/10-sd-wan/configs/README.md) and [an evidence map](lessons/10-sd-wan/evidence/README.md).
