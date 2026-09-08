@@ -4,6 +4,10 @@ An evidence-led network-security lab in EVE-NG: build a capability, explain the 
 
 **FortiOS 7.6.7 · EVE-NG / KVM · 11 lessons · Final case study: SD-WAN**
 
+**Configured hands-on:** Firewall Policies, NAT & VIPs · Static Routing & ECMP · Firewall Authentication · Antivirus (flow/proxy) · Web Filtering · SSL/TLS Certificate Inspection · IPS & Application Control · Site-to-Site IPsec VPN · SD-WAN (zones, rules, Performance SLA)
+
+**Lab at a glance:** 2 FortiGate appliances · 3 Linux hosts · 174 lesson evidence artifacts.
+
 [Read the final lesson](lessons/10-sd-wan/README.md) · [Browse the lessons](#lesson-index) · [Explore the evidence](lessons/10-sd-wan/evidence/README.md)
 
 ## What this project demonstrates
@@ -21,6 +25,13 @@ GUI workflows make the configuration readable. Sanitized CLI references make the
 
 Kali reaches Alpine's `10.60.60.100/32` loopback through either a route-based IPsec tunnel or a routed R1 path. HQ SD-WAN selects between the two members; distinct firewall policies preserve the intended NAT behavior.
 
+![Final EVE-NG lab topology with HQ and Branch FortiGates, R1, Alpine, Kali, and the LAN test host](assets/final-lab-topology.png)
+
+*The actual lab: HQ at the center, Branch upper left, R1 lower left, and Alpine at the far left.*
+
+<details>
+<summary>Logical view of the two traffic paths</summary>
+
 ```mermaid
 flowchart TD
     K["Kali · 10.10.10.100"] --> H["HQ FortiGate"]
@@ -29,6 +40,8 @@ flowchart TD
     B -->|"Alpine eth2"| A["Alpine loopback · 10.60.60.100/32"]
     R -->|"Alpine eth1"| A
 ```
+
+</details>
 
 The final lesson connects three useful findings:
 
